@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  spring-boot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring_boot_app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: mvn -pl apresentacao spring-boot:run
+    env_file:
+      - .env
+    depends_on:
+      - checkpoint-db
+    networks:
+      - spring-network
+
+  checkpoint-db:
+    image: postgres:17-alpine
+    container_name: checkpoint-db
+    restart: always
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    ports:
+      - '5432:5432'
+    networks:
+      - spring-network
+
+volumes:
+  db-volume:
+    driver: local
+
+networks:
+  spring-network:
+    driver: bridge

@@ -24,7 +24,7 @@ BoundedContext Principal implements Principal {
             -List<JogoId> jogosFavoritos
 
             Repository UserRepository {
-                void saveUser(@User user);
+                @User saveUser(@User user);
                 @User createUser(String _email, String senha, String nome);
                 @User getUser(@UserId id);
                 @User getByEmail(String _email);
@@ -40,9 +40,11 @@ BoundedContext Principal implements Principal {
 
         Service UserServico {
             // Cadastro e autenticação
-			String login(String _email, String senha);
+						String login(String _email, String senha);
             String registerUser(String _email, String senha, String nome);
             void verifyEmail(@Token token);
+
+						@User getUserById(@UserId userId);
 
             // Perfil
             void updateProfile(@User user, String nome, String bio, List<@RedeSocial> redesSociais);
@@ -50,12 +52,12 @@ BoundedContext Principal implements Principal {
             void togglePrivacicade(@User user, Boolean isPrivate);
 
             // Seguidores
-            void toggleSeguir(@User seguidor, @User userAlvo);
-            void approveSeguidor(@User dono, @User solicitante);
-            void rejectSeguidor(@User dono, @User solicitante);
+            void toggleSeguir(@User seguidor, @UserId userAlvo);
+            void approveSeguidor(@User dono, @UserId solicitante);
+            void rejectSeguidor(@User dono, @UserId solicitante);
 
 			// informações
-			@User getInformacoes(@User solicitante, @User solicitado);
+			@User getInformacoes(@User solicitante, @UserId solicitadoId);
 
             // Favoritos no perfil
             void addJogoFavorito(@User user, @Jogo jogo);
@@ -119,7 +121,7 @@ BoundedContext Principal implements Principal {
 	            @Diario getDiario(@DiarioId id);
 	            @Diario getDiarioByDono(@User user);
 
-				@RegistroDiario createRegistroDiario(@JogoId jogo, Date dataInicio, Date dataTermino);
+				@RegistroDiario createRegistroDiario(@JogoId jogo, @DiarioId diario, Date dataInicio, Date dataTermino);
 				@RegistroDiario getRegistroDiario(@RegistroId registroId);
 				void saveRegistroDiario(@RegistroDiario registroDiario);
 
@@ -150,6 +152,8 @@ BoundedContext Principal implements Principal {
 	    }
 	
 	    Service DiarioServico {
+					@Diario createDiario(@User user);
+					@Diario getDiario(@User user);
 	
 	        // Registros de jogos
 	        void addRegistro(@Diario diario, @JogoId jogoId, Date dataInicio, Date dataTermino);
