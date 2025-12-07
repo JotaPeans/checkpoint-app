@@ -5,6 +5,8 @@ import static org.apache.commons.lang3.Validate.notNull;
 public class RequisitosDeSistema {
     private final RequisitosDeSistemaId id;
 
+    private final JogoId jogoId;
+
     private String sistemaOp;
     private String processador;
     private String memoria;
@@ -13,12 +15,14 @@ public class RequisitosDeSistema {
 
     public RequisitosDeSistema(
             RequisitosDeSistemaId id,
+            JogoId jogoId,
             String sistemaOp,
             String processador,
             String memoria,
             String placaVideo,
             String tipo
     ) {
+        this.jogoId = jogoId;
         notNull(id, "O id não pode ser nulo");
         notNull(sistemaOp, "O sistema operacional não pode ser nulo");
         notNull(processador, "O processador não pode ser nulo");
@@ -37,6 +41,10 @@ public class RequisitosDeSistema {
 
     public RequisitosDeSistemaId getId() {
         return id;
+    }
+
+    public JogoId getJogoId() {
+        return jogoId;
     }
 
     public String getSistemaOp() {

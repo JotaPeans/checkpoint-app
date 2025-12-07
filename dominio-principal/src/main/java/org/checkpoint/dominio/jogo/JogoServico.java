@@ -6,8 +6,8 @@ import org.checkpoint.dominio.user.UserId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
 public class JogoServico {
@@ -36,7 +36,7 @@ public class JogoServico {
         return this.jogoRepositorio.listJogos();
     }
 
-    public RequisitosDeSistema getRequisitosDeSistema(JogoId jogoId) {
+    public List<RequisitosDeSistema> getRequisitosDeSistema(JogoId jogoId) {
         notNull(jogoId, "O id do jogo não pode ser nulo");
 
         return this.jogoRepositorio.getRequisitosDeSistemaByJogoId(jogoId);
@@ -91,7 +91,7 @@ public class JogoServico {
         this.jogoRepositorio.saveJogo(jogo);
     }
 
-    public void editAvaliacao(AvaliacaoId avaliacaoId, Double novaNota, String novaCritica) {
+    public void editAvaliacao(User user, AvaliacaoId avaliacaoId, Double novaNota, String novaCritica) {
         notNull(avaliacaoId, "O id avaliação não pode ser nulo");
         notNull(novaNota, "A nova nota não pode ser nula");
 
@@ -113,6 +113,8 @@ public class JogoServico {
 
         Avaliacao avaliacao = this.jogoRepositorio.getAvaliacaoById(avaliacaoId);
         notNull(avaliacao, "Avaliação não encontrada");
+
+        isTrue(avaliacao.getAutorId().equals(user.getUserId()), "Avaliação não encontrada");
 
         avaliacao.setComentario(novaCritica);
         avaliacao.setNota(novaNota);
@@ -154,7 +156,7 @@ public class JogoServico {
         Jogo jogo = this.jogoRepositorio.getJogo(jogoId);
         notNull(jogo, "Jogo não encontrado");
 
-        List<TagId> tagsDoJogo = new ArrayList<>(jogo.getTags());
+        List<Tag> tagsDoJogo = jogo.getTags();
 
         for (String nomeTag : tags) {
             if (nomeTag == null || nomeTag.trim().isEmpty()) continue;
@@ -162,17 +164,18 @@ public class JogoServico {
             String nomeNormalizado = nomeTag.trim();
 
             Tag tag = this.jogoRepositorio.getTagByName(nomeNormalizado);
+
             if (tag == null) {
-                tag = this.jogoRepositorio.createTag(nomeNormalizado);
+                tag = this.jogoRepositorio.createTag(jogo, nomeNormalizado);
             }
 
             boolean novoVoto = tag.addVoto(userId);
             if (novoVoto) {
-                this.jogoRepositorio.saveTag(tag);
+                this.jogoRepositorio.saveTag(jogo, tag);
             }
 
-            if (!tagsDoJogo.contains(tag.getId())) {
-                tagsDoJogo.add(tag.getId());
+            if (!tagsDoJogo.contains(tag)) {
+                tagsDoJogo.add(tag);
             }
         }
 
@@ -191,19 +194,19 @@ public class JogoServico {
         Jogo jogo = this.jogoRepositorio.getJogo(jogoId);
         notNull(jogo, "Jogo não encontrado");
 
-        List<TagId> tagsDoJogo = new ArrayList<>(jogo.getTags());
+        List<Tag> tagsDoJogo = new ArrayList<>(jogo.getTags());
 
-        if (!tagsDoJogo.contains(tag.getId())) {
+        if (!tagsDoJogo.contains(tag)) {
             throw new IllegalArgumentException("Essa tag não está associada ao jogo.");
         }
 
         boolean removeu = tag.removeVoto(userId);
         if (removeu) {
-            this.jogoRepositorio.saveTag(tag);
+            this.jogoRepositorio.saveTag(jogo, tag);
         }
 
         if (tag.getTotalVotos() == 0) {
-            tagsDoJogo.remove(tag.getId());
+            tagsDoJogo.remove(tag);
             jogo.setTags(tagsDoJogo);
             this.jogoRepositorio.saveJogo(jogo);
         }
@@ -215,12 +218,7 @@ public class JogoServico {
         Jogo jogo = this.jogoRepositorio.getJogo(jogoId);
         notNull(jogo, "Jogo não encontrado");
 
-        List<Tag> jogoTags = new ArrayList<>();
-
-        for (TagId tagId : jogo.getTags()) {
-            Tag tag = this.jogoRepositorio.getTagById(tagId);
-            jogoTags.add(tag);
-        }
+        List<Tag> jogoTags = jogo.getTags();
 
         int limiteTags = 5;
 
@@ -229,7 +227,7 @@ public class JogoServico {
                         Comparator.comparingInt(Tag::getTotalVotos).reversed()
                                 .thenComparing(Tag::getNome, String.CASE_INSENSITIVE_ORDER)
                 )
-                .limit(5)
+                .limit(limiteTags)
                 .toList();
     }
 

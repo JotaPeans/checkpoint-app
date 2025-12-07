@@ -2,6 +2,7 @@ package org.checkpoint.dominio.jogo;
 
 import org.checkpoint.dominio.user.UserId;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -16,6 +17,26 @@ public class Avaliacao {
     private String comentario;
     private Date data;
     private List<UserId> curtidas;
+
+    public Avaliacao(
+            UserId autorId,
+            JogoId jogoId,
+            Double nota,
+            String comentario
+    ) {
+        notNull(autorId, "O id do autor não pode ser nulo");
+        notNull(jogoId, "O id do jogo não pode ser nulo");
+        notNull(nota, "A nota pode ser nula");
+
+        this.id = null;
+
+        setAutorId(autorId);
+        setJogoId(jogoId);
+        setNota(nota);
+        setComentario(comentario);
+        setData(new Date());
+        setCurtidas(new ArrayList<>());
+    }
 
     public Avaliacao(
             AvaliacaoId id,

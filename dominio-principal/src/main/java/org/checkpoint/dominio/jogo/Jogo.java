@@ -17,8 +17,8 @@ public class Jogo {
     private double nota;
     private List<String> capturas;
     private List<UserId> curtidas;
-    private List<TagId> tags;
-    private List<RequisitosDeSistemaId> requisitos;
+    private List<Tag> tags;
+    private List<RequisitosDeSistema> requisitos;
     private List<Avaliacao> avaliacoes;
 
     public Jogo(
@@ -31,8 +31,8 @@ public class Jogo {
             double nota,
             List<String> capturas,
             List<UserId> curtidas,
-            List<TagId> tags,
-            List<RequisitosDeSistemaId> requisitos,
+            List<Tag> tags,
+            List<RequisitosDeSistema> requisitos,
             List<Avaliacao> avaliacoes
     ) {
         notNull(id, "O id não pode ser nulo");
@@ -122,19 +122,19 @@ public class Jogo {
         this.curtidas = curtidas;
     }
 
-    public List<TagId> getTags() {
+    public List<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<TagId> tags) {
+    public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
 
-    public List<RequisitosDeSistemaId> getRequisitos() {
+    public List<RequisitosDeSistema> getRequisitos() {
         return requisitos;
     }
 
-    public void setRequisitos(List<RequisitosDeSistemaId> requisitos) {
+    public void setRequisitos(List<RequisitosDeSistema> requisitos) {
         this.requisitos = requisitos;
     }
 

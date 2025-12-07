@@ -12,8 +12,19 @@ public class Tag {
     private final TagId id;
     private String nome;
     private List<UserId> votos;
+    private Jogo jogo;
 
-    public Tag(TagId id, String nome, List<UserId> votos) {
+    public Tag(String nome, Jogo jogo) {
+        notNull(nome, "O nome não pode ser nulo");
+
+        this.id = null;
+
+        setNome(nome);
+        setVotos(new ArrayList<>());
+        setJogo(jogo);
+    }
+
+    public Tag(TagId id, String nome, List<UserId> votos, Jogo jogo) {
         notNull(id, "O id não pode ser nulo");
         notNull(nome, "O nome não pode ser nulo");
         notNull(votos, "A lista de votos não pode ser nula");
@@ -22,6 +33,7 @@ public class Tag {
 
         setNome(nome);
         setVotos(votos);
+        setJogo(jogo);
     }
 
     public TagId getId() { return id; }
@@ -50,6 +62,14 @@ public class Tag {
     public boolean removeVoto(UserId userId) {
         if (votos == null) return false;
         return votos.remove(userId);
+    }
+
+    public Jogo getJogo() {
+        return jogo;
+    }
+
+    public void setJogo(Jogo jogo) {
+        this.jogo = jogo;
     }
 
     @Override
