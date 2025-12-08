@@ -4,9 +4,9 @@ import org.checkpoint.dominio.diario.DiarioId;
 import org.checkpoint.dominio.jogo.JogoId;
 import org.checkpoint.dominio.lista.ListaId;
 
-import static org.apache.commons.lang3.Validate.notNull;
-
 import java.util.List;
+
+import static org.apache.commons.lang3.Validate.notNull;
 
 public class User {
     private final UserId id;
@@ -27,6 +27,30 @@ public class User {
     private List<ListaId> listas;
     private List<JogoId> jogosFavoritos;
 
+    public User(String nome,
+                String email,
+                String senha) {
+        this.id = null;
+        setNome(nome);
+        setEmail(email);
+        setSenha(senha);
+        setAvatarUrl("");
+        setBio("");
+        setIsPrivate(false);
+        setEmailVerificado(false);
+    }
+
+    public User(UserId id, String nome,
+                String avatarUrl, boolean isPrivate, boolean emailVerificado) {
+        this.id = id;
+        setNome(nome);
+        setSenha("");
+        setAvatarUrl(avatarUrl);
+        setBio("");
+        setIsPrivate(isPrivate);
+        setEmailVerificado(emailVerificado);
+    }
+
     public User(
             UserId id,
             String nome,
@@ -42,8 +66,7 @@ public class User {
             List<UserId> seguindo,
             List<UserId> seguidores,
             List<ListaId> listas,
-            List<JogoId> jogosFavoritos
-    ) {
+            List<JogoId> jogosFavoritos) {
         notNull(id, "O id não pode ser nulo");
         notNull(nome, "O nome não pode ser nulo");
         notNull(email, "O email não pode ser nulo");

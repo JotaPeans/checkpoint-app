@@ -1,7 +1,7 @@
 package org.checkpoint.dominio.user;
 
 public interface UserRepositorio {
-    void saveUser(User user);
+    User saveUser(User user);
 
     User getUser(UserId id);
 

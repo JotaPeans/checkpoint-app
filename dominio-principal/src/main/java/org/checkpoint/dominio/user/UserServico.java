@@ -1,42 +1,46 @@
 package org.checkpoint.dominio.user;
 
+import org.checkpoint.dominio.autenticacao.Autenticacao;
+import org.checkpoint.dominio.diario.Diario;
+import org.checkpoint.dominio.diario.DiarioRepositorio;
 import org.checkpoint.dominio.email.EmailSenderService;
 import org.checkpoint.dominio.email.Token;
 import org.checkpoint.dominio.email.VerificacaoEmail;
 import org.checkpoint.dominio.jogo.Jogo;
 import org.checkpoint.dominio.jogo.JogoId;
 
-import static org.apache.commons.lang3.Validate.notNull;
-import static org.apache.commons.lang3.Validate.isTrue;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.apache.commons.lang3.Validate.isTrue;
+import static org.apache.commons.lang3.Validate.notNull;
+
 public class UserServico {
     private final UserRepositorio userRepositorio;
+    private final DiarioRepositorio diarioRepositorio;
     private final EmailSenderService emailSenderService;
+    private final Autenticacao autenticacao;
 
-    public UserServico(UserRepositorio userRepositorio, EmailSenderService emailSenderService) {
+    public UserServico(UserRepositorio userRepositorio, DiarioRepositorio diarioRepositorio,
+                       EmailSenderService emailSenderService, Autenticacao autenticacao) {
         notNull(userRepositorio, "O repositório de usuários não pode ser nulo");
+        notNull(diarioRepositorio, "O repositório de diario não pode ser nulo");
         notNull(emailSenderService, "O servico de email não pode ser nulo");
+        notNull(autenticacao, "A implementação de autententicacao não pode ser nula");
 
         this.userRepositorio = userRepositorio;
+        this.diarioRepositorio = diarioRepositorio;
         this.emailSenderService = emailSenderService;
+        this.autenticacao = autenticacao;
     }
 
     public String login(String email, String senha) {
         notNull(email, "O email não pode ser nulo");
         notNull(senha, "A senha não pode ser nula");
 
-        User user = this.userRepositorio.getByEmail(email);
-
-        isTrue(user != null && user.getSenha().equals(senha), "E-mail ou senha inválidos");
-
-        isTrue(user.isEmailVerificado(), "A conta não foi verificada");
-
-        return "token jwt";
+        return this.autenticacao.login(email, senha);
     }
 
     public String registerUser(String email, String senha, String nome) {
@@ -51,12 +55,11 @@ public class UserServico {
         boolean emailValido = EMAIL_PATTERN.matcher(email).matches();
         isTrue(emailValido, "O e-mail está fora do padrão");
 
-        String PASSWORD_REGEX =
-                "^(?=.*[a-z])" +        // pelo menos uma letra minúscula
-                        "(?=.*[A-Z])" +        // pelo menos uma letra maiúscula
-                        "(?=.*\\d)" +          // pelo menos um número
-                        "(?=.*[@$!%*?&^#()\\[\\]{}._+\\-=<>])" + // pelo menos um caractere especial
-                        ".{8,}$";              // pelo menos 8 caracteres
+        String PASSWORD_REGEX = "^(?=.*[a-z])" + // pelo menos uma letra minúscula
+                "(?=.*[A-Z])" + // pelo menos uma letra maiúscula
+                "(?=.*\\d)" + // pelo menos um número
+                "(?=.*[@$!%*?&^#()\\[\\]{}._+\\-=<>])" + // pelo menos um caractere especial
+                ".{8,}$"; // pelo menos 8 caracteres
 
         Pattern PASSWORD_PATTERN = Pattern.compile(PASSWORD_REGEX);
         boolean senhaValida = PASSWORD_PATTERN.matcher(senha).matches();
@@ -64,13 +67,14 @@ public class UserServico {
                 senhaValida,
                 "A senha deve conter, no mínimo, " +
                         "pelo menos uma letra minúscula, pelo menos uma letra maiúscula, " +
-                        "pelo menos um número, pelo menos um caracter especial, e pelo menos 8 digitos"
-        );
+                        "pelo menos um número, pelo menos um caracter especial, e pelo menos 8 digitos");
 
         boolean isEmailAlreadyInUse = this.isEmailAlreadyInUse(email);
         isTrue(!isEmailAlreadyInUse, "O e-mail já está cadastrado");
 
         User user = userRepositorio.createUser(email, senha, nome);
+
+        diarioRepositorio.saveDiario(new Diario(user.getUserId()));
 
         String token = this.emailSenderService.generateVerificationToken(email, user.getUserId());
         this.emailSenderService.sendVerificationEmail(email, token);
@@ -95,6 +99,18 @@ public class UserServico {
         user.setEmailVerificado(true);
 
         this.userRepositorio.saveUser(user);
+
+        this.emailSenderService.deleteVerificacaoEmailByToken(token);
+    }
+
+    public User getUserById(UserId userId) {
+        notNull(userId, "O userId não pode ser nulo");
+
+        User user = this.userRepositorio.getUser(userId);
+
+        notNull(user, "Usuário não encontrado");
+
+        return user;
     }
 
     public void addJogoFavorito(User user, Jogo jogo) {
@@ -156,10 +172,12 @@ public class UserServico {
         this.userRepositorio.saveUser(user);
     }
 
-        public void updateProfile(User user, String nome, String bio, List<RedeSocial> redesSociais) {
+    public void updateProfile(User user, String nome, String bio, List<RedeSocial> redesSociais) {
         notNull(user, "O usuário não pode ser nulo");
         notNull(nome, "O nome não pode ser nulo");
         notNull(redesSociais, "A lista de redes sociais não pode ser nula");
+
+        notNull(user, "Usuário não encontrado");
 
         user.setNome(nome);
         user.setBio(bio);
@@ -171,6 +189,8 @@ public class UserServico {
         notNull(user, "O usuário não pode ser nulo");
         notNull(avatarUrl, "A URL do avatar não pode ser nula");
 
+        notNull(user, "Usuário não encontrado");
+
         user.setAvatarUrl(avatarUrl);
         this.userRepositorio.saveUser(user);
     }
@@ -179,6 +199,8 @@ public class UserServico {
         notNull(user, "O usuário não pode ser nulo");
         notNull(isPrivate, "O parâmetro 'isPrivate' não pode ser nulo");
 
+        notNull(user, "Usuário não encontrado");
+
         user.setIsPrivate(isPrivate);
         this.userRepositorio.saveUser(user);
     }
@@ -186,47 +208,59 @@ public class UserServico {
     // =====================
     // Seguidores
     // =====================
-    public void toggleSeguir(User seguidor, User userAlvo) {
-        notNull(seguidor, "O seguidor não pode ser nulo");
-        notNull(userAlvo, "O usuário alvo não pode ser nulo");
+    public void toggleSeguir(User fromUser, UserId userAlvoId) {
+        notNull(fromUser, "O seguidor não pode ser nulo");
+        notNull(userAlvoId, "O usuário alvo não pode ser nulo");
 
-        if (userAlvo.getIsPrivate()) {
+        User toUser = this.userRepositorio.getUser(userAlvoId);
+
+        notNull(fromUser, "Usuário não encontrado");
+        notNull(toUser, "Usuário não encontrado");
+
+        if (toUser.getIsPrivate()) {
             // Usuário é privado -> cria solicitação pendente
-            List<UserId> solicitacoesPendentes = userAlvo.getSolicitacoesPendentes();
+            List<UserId> solicitacoesPendentes = toUser.getSolicitacoesPendentes();
 
-            if (solicitacoesPendentes.contains(seguidor.getUserId()) == false) {
-                solicitacoesPendentes.add(seguidor.getUserId());
-                userAlvo.setSolicitacoesPendentes(solicitacoesPendentes);
+            if (solicitacoesPendentes.contains(fromUser.getUserId()) == false) {
+                solicitacoesPendentes.add(fromUser.getUserId());
+                toUser.setSolicitacoesPendentes(solicitacoesPendentes);
+
+                this.emailSenderService.sendEmail(toUser.getEmail(), "Solicitação para seguir", "O usuario <b>" + fromUser.getNome() + "</b> gostaria de seguir você.");
             }
         } else {
             // Usuário é público -> segue diretamente
-            List<UserId> userAlvoSeguidores = userAlvo.getSeguidores();
-            List<UserId> userSeguidorSeguindo = userAlvo.getSeguindo();
+            List<UserId> fromUserSeguindo = fromUser.getSeguindo();
 
-            if (userAlvoSeguidores.contains(seguidor.getUserId()) == false) {
-                userAlvoSeguidores.add(seguidor.getUserId());
-                userAlvo.setSeguidores(userAlvoSeguidores);
+            List<UserId> toUserSeguidores = toUser.getSeguidores();
 
+            if (toUserSeguidores.contains(fromUser.getUserId()) == false) {
+                toUserSeguidores.add(fromUser.getUserId());
+                toUser.setSeguidores(toUserSeguidores);
 
-                userSeguidorSeguindo.add(userAlvo.getUserId());
-                seguidor.setSeguindo(userSeguidorSeguindo);
+                fromUserSeguindo.add(toUser.getUserId());
+                fromUser.setSeguindo(fromUserSeguindo);
             } else {
                 // Já segue-> desfaz
-                userAlvoSeguidores.remove(seguidor.getUserId());
-                userAlvo.setSeguidores(userAlvoSeguidores);
+                toUserSeguidores.remove(fromUser.getUserId());
+                toUser.setSeguidores(toUserSeguidores);
 
-                seguidor.getSeguindo().remove(userAlvo.getUserId());
-                seguidor.setSeguindo(userSeguidorSeguindo);
+                fromUser.getSeguindo().remove(toUser.getUserId());
+                fromUser.setSeguindo(fromUserSeguindo);
             }
         }
 
-        userRepositorio.saveUser(seguidor);
-        userRepositorio.saveUser(userAlvo);
+        userRepositorio.saveUser(fromUser);
+        userRepositorio.saveUser(toUser);
     }
 
-    public void approveSeguidor(User dono, User solicitante) {
+    public void approveSeguidor(User dono, UserId solicitanteId) {
         notNull(dono, "O dono não pode ser nulo");
-        notNull(solicitante, "O solicitante não pode ser nulo");
+        notNull(solicitanteId, "O solicitante não pode ser nulo");
+
+        User solicitante = this.userRepositorio.getUser(solicitanteId);
+
+        notNull(dono, "Usuário não encontrado");
+        notNull(solicitante, "Usuário não encontrado");
 
         List<UserId> solicitacoesPendentes = dono.getSolicitacoesPendentes();
 
@@ -247,9 +281,14 @@ public class UserServico {
         userRepositorio.saveUser(solicitante);
     }
 
-    public void rejectSeguidor(User dono, User solicitante) {
+    public void rejectSeguidor(User dono, UserId solicitanteId) {
         notNull(dono, "O dono não pode ser nulo");
-        notNull(solicitante, "O solicitante não pode ser nulo");
+        notNull(solicitanteId, "O solicitante não pode ser nulo");
+
+        User solicitante = this.userRepositorio.getUser(solicitanteId);
+
+        notNull(dono, "Usuário não encontrado");
+        notNull(solicitante, "Usuário não encontrado");
 
         List<UserId> solicitacoesPendentes = dono.getSolicitacoesPendentes();
 
@@ -262,69 +301,37 @@ public class UserServico {
         userRepositorio.saveUser(dono);
     }
 
-    public String getInformacoes(User solicitante, User solicitado) {
+    public User getInformacoes(User solicitante, UserId solicitadoId) {
         notNull(solicitante, "O solicitante não pode ser nulo");
-        notNull(solicitado, "O usuário solicitado não pode ser nulo");
+        notNull(solicitadoId, "O usuário solicitado não pode ser nulo");
+
+        User solicitado = userRepositorio.getUser(solicitadoId);
+
+        if (solicitado == null) {
+            return null;
+        }
 
         if (!solicitado.getIsPrivate()) {
-            return montarInformacoes(solicitado);
+            return solicitado;
         }
 
         if (solicitante.getUserId().equals(solicitado.getUserId())) {
-            return montarInformacoes(solicitado);
+            return solicitado;
         }
 
         if (solicitado.getSeguidores() != null && solicitado.getSeguidores().contains(solicitante.getUserId())) {
-            return montarInformacoes(solicitado);
+            return solicitado;
         }
 
-        return "Você não é seguidor desta pessoa.";
+        return new User(solicitadoId, solicitado.getNome(), solicitado.getAvatarUrl(), solicitado.getIsPrivate(), solicitado.isEmailVerificado());
     }
-
-    private String montarInformacoes(User u) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Nome: ").append(u.getNome()).append("\n");
-
-        if (u.getEmail() != null)
-            sb.append("Email: ").append(u.getEmail()).append("\n");
-
-        if (u.getBio() != null)
-            sb.append("Bio: ").append(u.getBio()).append("\n");
-
-        sb.append("Privado: ").append(u.getIsPrivate() ? "Sim" : "Não").append("\n");
-
-        if (u.getDiarioId() != null)
-            sb.append("Diário: ").append(u.getDiarioId().toString()).append("\n");
-
-        if (u.getRedesSociais() != null && !u.getRedesSociais().isEmpty())
-            sb.append("Redes Sociais: ").append(u.getRedesSociais()).append("\n");
-
-        if (u.getSeguindo() != null)
-            sb.append("Seguindo: ").append(u.getSeguindo().size()).append("\n");
-
-        if (u.getSeguidores() != null)
-            sb.append("Seguidores: ").append(u.getSeguidores().size()).append("\n");
-
-        if (u.getListas() != null && !u.getListas().isEmpty())
-            sb.append("Listas: ").append(u.getListas()).append("\n");
-
-        if (u.getJogosFavoritos() != null && !u.getJogosFavoritos().isEmpty())
-            sb.append("Jogos favoritos: ").append(u.getJogosFavoritos()).append("\n");
-
-        return sb.toString();
-    }
-
-
 
     // =====================
     // Validações
     // =====================
     public Boolean isEmailAlreadyInUse(String email) {
         notNull(email, "O email não pode ser nulo");
-
         User user = this.userRepositorio.getByEmail(email);
         return user != null;
     }
-
-
 }

@@ -3,8 +3,10 @@ package org.checkpoint.dominio.user;
 import java.util.Objects;
 
 public class RedeSocial {
-    private final String plataforma;
-    private final String username;
+    private String plataforma;
+    private String username;
+
+    public RedeSocial() {} // Jackson usa isso
 
     public RedeSocial(String plataforma, String username) {
         this.plataforma = plataforma;
@@ -26,6 +28,10 @@ public class RedeSocial {
     public String getUsername() {
         return this.username;
     }
+
+    public void setPlataforma(String plataforma) { this.plataforma = plataforma; }
+
+    public void setUsername(String username) { this.username = username; }
 
     @Override
     public String toString() {
