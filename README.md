@@ -46,11 +46,6 @@ Essas duas variáveis de ambiente precisam estar em um arquivo `.env` dentro da 
 
 ***VITE_API_URL*** é a url de acesso ao backend.
 
-### Você também pode rodar o projeto simplesmente executando:
-```bash
-docker compose up
-```
-
 Essa variável de ambiente precisa estar em um arquivo `.env` dentro da pasta `apresentacao-frontend`
 
 Mas precisa inserir manualmente as variáveis de ambiente do backend (RESEND_API_KEY e JWT_SECRET)
