@@ -39,6 +39,8 @@ Essa etapa é necessária pois o sistema precisa de confirmação de email do us
 openssl rand -hex 32
 ```
 
+Essas duas variáveis de ambiente precisam estar em um arquivo `.env` dentro da pasta **root** do projeto.
+
 ### O frontend precisa apenas de uma variável de ambiente:
   - VITE_API_URL
 
@@ -48,5 +50,7 @@ openssl rand -hex 32
 ```bash
 docker compose up
 ```
+
+Essa variável de ambiente precisa estar em um arquivo `.env` dentro da pasta `apresentacao-frontend`
 
 Mas precisa inserir manualmente as variáveis de ambiente do backend (RESEND_API_KEY e JWT_SECRET)
