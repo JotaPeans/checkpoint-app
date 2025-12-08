@@ -9,5 +9,7 @@ public interface EmailSenderService {
 
     void sendVerificationEmail(String email, String token);
 
-    public VerificacaoEmail getVerificacaoEmailByToken (Token token);
+    VerificacaoEmail getVerificacaoEmailByToken (Token token);
+
+    void deleteVerificacaoEmailByToken (Token token);
 }

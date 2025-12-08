@@ -9,15 +9,18 @@ import static org.apache.commons.lang3.Validate.notNull;
 
 public class EmailServico implements EmailSenderService {
     private final VerificacaoEmailRepositorio verificacaoEmailRepositorio;
+    private final EmailStrategy emailStrategy;
 
-    public EmailServico(VerificacaoEmailRepositorio verificacaoEmailRepositorio) {
+    public EmailServico(VerificacaoEmailRepositorio verificacaoEmailRepositorio, EmailStrategy emailStrategy) {
         notNull(verificacaoEmailRepositorio, "O repositório de verificacao de email não pode ser nulo");
+        notNull(verificacaoEmailRepositorio, "O repositório de email não pode ser nulo");
 
         this.verificacaoEmailRepositorio = verificacaoEmailRepositorio;
+        this.emailStrategy = emailStrategy;
     }
 
     public void sendEmail(String recipient, String subject, String body) {
-        System.out.println("Email enviado");
+        emailStrategy.sendEmail(recipient, subject, body);
     }
 
     public String generateVerificationToken(String email, UserId userId) {
@@ -28,7 +31,8 @@ public class EmailServico implements EmailSenderService {
 
             for (byte b : hashBytes) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1)
+                    hexString.append('0');
                 hexString.append(hex);
             }
 
@@ -42,11 +46,18 @@ public class EmailServico implements EmailSenderService {
     }
 
     public void sendVerificationEmail(String email, String token) {
-        System.out.println("Email de verificacao enviado");
+        String host = "http://localhost:8080";
+        String html = String.format("<a href=\"%s\" target=\"_blank\">Verificar Email</a>", host + "/api/user/verify-email/" + token);
+
+        this.sendEmail(email, "Token de verificacao", html);
     }
 
-    public VerificacaoEmail getVerificacaoEmailByToken (Token token) {
+    public VerificacaoEmail getVerificacaoEmailByToken(Token token) {
         return this.verificacaoEmailRepositorio.getByToken(token);
+    }
+
+    public void deleteVerificacaoEmailByToken(Token token) {
+        this.verificacaoEmailRepositorio.deleteToken(token);
     }
 
 }

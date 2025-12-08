@@ -1,5 +1,6 @@
 package org.checkpoint.dominio.email;
 
+import org.checkpoint.dominio.user.User;
 import org.checkpoint.dominio.user.UserId;
 
 public interface VerificacaoEmailRepositorio {
@@ -11,5 +12,5 @@ public interface VerificacaoEmailRepositorio {
 
     VerificacaoEmail createToken(Token token, UserId id);
 
-    VerificacaoEmail getByUserId(UserId id);
+    VerificacaoEmail getByUser(User user);
 }
