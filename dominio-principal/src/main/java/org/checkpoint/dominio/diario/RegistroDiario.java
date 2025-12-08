@@ -11,16 +11,35 @@ public class RegistroDiario {
     private final RegistroId id;
 
     private JogoId jogoId;
+    private Diario diario;
     private Date dataInicio;
     private Date dataTermino;
-    private List<ConquistaId> conquistas;
+    private List<Conquista> conquistas;
 
+    public RegistroDiario(
+        JogoId jogoId,
+        Diario diario,
+        Date dataInicio,
+        Date dataTermino
+    ) {
+        notNull(jogoId, "O id do jogo não pode ser nulo");
+        notNull(diario, "O id do diário não pode ser nulo");
+
+        this.id = null;
+
+        setJogoId(jogoId);
+        setDataInicio(new Date());
+        setDataInicio(dataInicio);
+        setDataTermino(dataTermino);
+    }
+    
     public RegistroDiario(
             RegistroId id,
             JogoId jogoId,
+            Diario diario,
             Date dataInicio,
             Date dataTermino,
-            List<ConquistaId> conquistas
+            List<Conquista> conquistas
     ) {
         notNull(id, "O id não pode ser nulo");
         notNull(jogoId, "O id do jogo não pode ser nulo");
@@ -30,6 +49,7 @@ public class RegistroDiario {
         this.id = id;
 
         setJogoId(jogoId);
+        setDiario(diario);
         setDataInicio(dataInicio);
         setDataTermino(dataTermino);
         setConquistas(conquistas);
@@ -47,6 +67,15 @@ public class RegistroDiario {
         this.jogoId = jogoId;
     }
 
+    public Diario getDiario() {
+        return diario;
+    }
+
+    public void setDiario(Diario diario) {
+        this.diario = diario;
+    }
+
+
     public Date getDataInicio() {
         return dataInicio;
     }
@@ -63,11 +92,11 @@ public class RegistroDiario {
         this.dataTermino = dataTermino;
     }
 
-    public List<ConquistaId> getConquistas() {
+    public List<Conquista> getConquistas() {
         return conquistas;
     }
 
-    public void setConquistas(List<ConquistaId> conquistas) {
+    public void setConquistas(List<Conquista> conquistas) {
         this.conquistas = conquistas;
     }
 }

@@ -4,9 +4,11 @@ import org.checkpoint.dominio.jogo.AvaliacaoId;
 import org.checkpoint.dominio.lista.ListaId;
 import org.checkpoint.dominio.user.UserId;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
 public class Comentario {
@@ -20,6 +22,27 @@ public class Comentario {
     private ListaId listaAlvoId;
 
     private ComentarioId comentarioPaiId;
+
+    public Comentario(
+            UserId autorId,
+            String conteudo,
+            AvaliacaoId avaliacaoAlvoId,
+            ListaId listaAlvoId,
+            ComentarioId comentarioPaiId
+    ) {
+        notNull(autorId, "O id do autor não pode ser nulo");
+        notNull(conteudo, "O conteúdo do comentário não pode ser nulo");
+
+        this.id = null;
+
+        setAutorId(autorId);
+        setConteudo(conteudo);
+        setData(new Date());
+        setAvaliacaoAlvoId(avaliacaoAlvoId);
+        setListaAlvoId(listaAlvoId);
+        setComentarioPaiId(comentarioPaiId);
+        setCurtidas(new ArrayList<>());
+    }
 
     public Comentario(
             ComentarioId id,

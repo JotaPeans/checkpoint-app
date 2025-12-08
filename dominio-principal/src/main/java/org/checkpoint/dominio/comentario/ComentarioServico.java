@@ -7,6 +7,7 @@ import org.checkpoint.dominio.user.UserId;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
 public class ComentarioServico {
@@ -93,6 +94,8 @@ public class ComentarioServico {
         Comentario comentario = this.comentarioRepositorio.getComentarioById(comentarioId);
         notNull(comentario, "Comentário não encontrado");
 
+        isTrue(comentario.getAutorId().equals(autor.getUserId()), "Comentário não encontrado");
+
         comentario.setConteudo(novoConteudo);
 
         this.comentarioRepositorio.saveComentario(comentario);
@@ -122,6 +125,10 @@ public class ComentarioServico {
     public void deleteComentario(User autor, ComentarioId comentarioId) {
         notNull(autor, "O autor não pode ser nulo");
         notNull(comentarioId, "O id do comentário não pode ser nulo");
+
+        Comentario comentario = this.comentarioRepositorio.getComentarioById(comentarioId);
+
+        isTrue(comentario.getAutorId().equals(autor.getUserId()), "Comentario não encontrado");
 
         this.deleteComentarioRecursivo(comentarioId);
     }
