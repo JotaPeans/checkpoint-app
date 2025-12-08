@@ -1,5 +1,7 @@
 package org.checkpoint.infraestrutura.persistencia.memoria;
 
+import org.checkpoint.dominio.autenticacao.Autenticacao;
+import org.checkpoint.dominio.email.EmailStrategy;
 import org.checkpoint.dominio.email.Token;
 import org.checkpoint.dominio.email.VerificacaoEmail;
 import org.checkpoint.dominio.email.VerificacaoEmailRepositorio;
@@ -8,6 +10,7 @@ import org.checkpoint.dominio.user.*;
 import org.checkpoint.dominio.diario.*;
 import org.checkpoint.dominio.lista.*;
 import org.checkpoint.dominio.comentario.*;
+import org.junit.platform.commons.PreconditionViolationException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,7 +24,7 @@ public class Repositorio implements
         DiarioRepositorio,
         ListaJogosRepositorio,
         VerificacaoEmailRepositorio,
-        ComentarioRepositorio {
+        ComentarioRepositorio, EmailStrategy, Autenticacao {
 
     /*-----------------------------------------------------------------------*/
     // USERS
@@ -35,9 +38,10 @@ public class Repositorio implements
     }
 
     @Override
-    public void saveUser(User user) {
+    public User saveUser(User user) {
         usersById.put(user.getUserId(), user);
         usersByEmail.put(user.getEmail(), user);
+        return user;
     }
 
     @Override
@@ -71,8 +75,7 @@ public class Repositorio implements
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
-                new ArrayList<>()
-        );
+                new ArrayList<>());
 
         usersById.put(novoUsuario.getUserId(), novoUsuario);
         usersByEmail.put(email, novoUsuario);
@@ -80,14 +83,13 @@ public class Repositorio implements
         return novoUsuario;
     }
 
-
     /*-----------------------------------------------------------------------*/
-// JOGOS
+    // JOGOS
     private final Map<JogoId, Jogo> jogosById = new HashMap<>();
     private final Map<AvaliacaoId, Avaliacao> avaliacoesById = new HashMap<>();
     private final Map<TagId, Tag> tagsById = new HashMap<>();
     private final Map<String, Tag> tagsByName = new HashMap<>();
-    private final Map<JogoId, RequisitosDeSistema> requisitosByJogo = new HashMap<>();
+    private final List<RequisitosDeSistema> requisitosByJogo = new ArrayList<>();
 
     private final AtomicInteger jogoIdSequence = new AtomicInteger(1);
     private final AtomicInteger avaliacaoIdSequence = new AtomicInteger(1);
@@ -142,9 +144,9 @@ public class Repositorio implements
     }
 
     @Override
-    public Tag createTag(String nome) {
+    public Tag createTag(Jogo jogo, String nome) {
         TagId novoId = new TagId(tagIdSequence.getAndIncrement());
-        Tag tag = new Tag(novoId, nome, new ArrayList<>());
+        Tag tag = new Tag(novoId, nome, new ArrayList<>(), jogo);
         tagsById.put(novoId, tag);
         tagsByName.put(nome.toLowerCase(), tag);
         return tag;
@@ -161,14 +163,14 @@ public class Repositorio implements
     }
 
     @Override
-    public void saveTag(Tag tag) {
+    public void saveTag(Jogo jogo, Tag tag) {
         tagsById.put(tag.getId(), tag);
         tagsByName.put(tag.getNome().toLowerCase(), tag);
     }
 
     @Override
-    public RequisitosDeSistema getRequisitosDeSistemaByJogoId(JogoId jogoId) {
-        return requisitosByJogo.get(jogoId);
+    public List<RequisitosDeSistema> getRequisitosDeSistemaByJogoId(JogoId jogoId) {
+        return requisitosByJogo.stream().filter(requisitosDeSistema -> requisitosDeSistema.getJogoId() == jogoId).toList();
     }
 
     /*-----------------------------------------------------------------------*/
@@ -182,15 +184,22 @@ public class Repositorio implements
     private final AtomicInteger registroIdSequence = new AtomicInteger(1);
     private final AtomicInteger conquistaIdSequence = new AtomicInteger(1);
 
-
     @Override
-    public void saveDiario(Diario diario) {
-        notNull(diario, "O diário não pode ser nulo");
-        notNull(diario.getId(), "O diário deve ter um ID válido");
-        notNull(diario.getDonoId(), "O diário deve ter um dono válido");
+    public Diario saveDiario(Diario diario) {
+        DiarioId novoDiarioId = new DiarioId(1);
+        ArrayList<RegistroDiario> registros = new ArrayList<>();
+        Diario novo = new Diario(
+                diario.getId() != null ? diario.getId() : novoDiarioId,
+                diario.getDonoId(),
+                diario.getRegistros() != null ? diario.getRegistros() : registros
+        );
+        notNull(novo, "O diário não pode ser nulo");
+        notNull(novo.getId(), "O diário deve ter um ID válido");
+        notNull(novo.getDonoId(), "O diário deve ter um dono válido");
 
-        diariosById.put(diario.getId(), diario);
-        diariosByUser.put(diario.getDonoId(), diario);
+        diariosById.put(novo.getId(), novo);
+        diariosByUser.put(novo.getDonoId(), novo);
+        return novo;
     }
 
     @Override
@@ -207,7 +216,7 @@ public class Repositorio implements
     }
 
     @Override
-    public RegistroDiario createRegistroDiario(JogoId jogo, Date dataInicio, Date dataTermino) {
+    public RegistroDiario createRegistroDiario(JogoId jogo, Diario diario, Date dataInicio, Date dataTermino) {
         notNull(jogo, "O id do jogo não pode ser nulo");
         notNull(dataInicio, "A data de início não pode ser nula");
 
@@ -216,13 +225,18 @@ public class Repositorio implements
         RegistroDiario registro = new RegistroDiario(
                 novoId,
                 jogo,
+                diario,
                 dataInicio,
                 dataTermino,
-                new ArrayList<ConquistaId>()
-        );
+                new ArrayList<>());
 
         registrosById.put(novoId, registro);
         return registro;
+    }
+
+    @Override
+    public List<RegistroDiario> listRegistros(DiarioId diarioId) {
+        return List.of();
     }
 
     @Override
@@ -240,22 +254,35 @@ public class Repositorio implements
     }
 
     @Override
-    public Conquista createConquista(String nome, Date dataDesbloqueada, boolean isUnloked) {
+    public void removeRegistroDiario(RegistroId registroId) {
+
+    }
+
+    @Override
+    public Conquista createConquista(String nome, Date dataDesbloqueada, boolean isUnloked, RegistroId registroId) {
         notNull(nome, "O nome da conquista não pode ser nulo");
         notNull(dataDesbloqueada, "A data de desbloqueio não pode ser nula");
 
         ConquistaId novoId = new ConquistaId(conquistaIdSequence.getAndIncrement());
+
+        RegistroDiario registroDiario = this.registrosById.get(registroId);
 
         // Ajuste este construtor se sua classe Conquista tiver assinatura diferente
         Conquista conquista = new Conquista(
                 novoId,
                 nome,
                 dataDesbloqueada,
-                isUnloked
+                isUnloked,
+                registroDiario
         );
 
         conquistasById.put(novoId, conquista);
         return conquista;
+    }
+
+    @Override
+    public List<Conquista> listConquistas(RegistroId registroId) {
+        return List.of();
     }
 
     @Override
@@ -271,6 +298,12 @@ public class Repositorio implements
 
         conquistasById.put(conquista.getId(), conquista);
     }
+
+    @Override
+    public void removeConquista(ConquistaId conquistaId) {
+
+    }
+
     /*-----------------------------------------------------------------------*/
     // LISTAS DE JOGOS
     private final Map<ListaId, ListaJogos> listasById = new HashMap<>();
@@ -285,6 +318,11 @@ public class Repositorio implements
     }
 
     @Override
+    public List<ListaJogos> getPublicLists(UserId userId) {
+        return List.of();
+    }
+
+    @Override
     public ListaJogos createList(UserId donoId, String titulo, boolean isPrivate) {
         notNull(donoId, "O id do dono não pode ser nulo");
         notNull(titulo, "O título da lista não pode ser nulo");
@@ -296,8 +334,7 @@ public class Repositorio implements
                 titulo,
                 isPrivate,
                 new ArrayList<>(),
-                new ArrayList<>()
-        );
+                new ArrayList<>());
 
         listasById.put(novoId, novaLista);
         return novaLista;
@@ -310,6 +347,16 @@ public class Repositorio implements
             }
         }
         return null;
+    }
+
+    @Override
+    public List<ListaJogos> getListByDono(UserId donoId) {
+        return List.of();
+    }
+
+    @Override
+    public void deleteList(ListaId id) {
+
     }
 
     /*-----------------------------------------------------------------------*/
@@ -344,18 +391,24 @@ public class Repositorio implements
         ComentarioId paiId = c.getComentarioPaiId();
         if (paiId != null) {
             List<Comentario> filhos = comentariosByPai.get(paiId);
-            if (filhos != null) filhos.removeIf(x -> x.getId().equals(c.getId()));
-            if (filhos != null && filhos.isEmpty()) comentariosByPai.remove(paiId);
+            if (filhos != null)
+                filhos.removeIf(x -> x.getId().equals(c.getId()));
+            if (filhos != null && filhos.isEmpty())
+                comentariosByPai.remove(paiId);
         } else {
             if (c.getAvaliacaoAlvoId() != null) {
                 List<Comentario> lst = comentariosRaizByAvaliacao.get(c.getAvaliacaoAlvoId());
-                if (lst != null) lst.removeIf(x -> x.getId().equals(c.getId()));
-                if (lst != null && lst.isEmpty()) comentariosRaizByAvaliacao.remove(c.getAvaliacaoAlvoId());
+                if (lst != null)
+                    lst.removeIf(x -> x.getId().equals(c.getId()));
+                if (lst != null && lst.isEmpty())
+                    comentariosRaizByAvaliacao.remove(c.getAvaliacaoAlvoId());
             }
             if (c.getListaAlvoId() != null) {
                 List<Comentario> lst = comentariosRaizByLista.get(c.getListaAlvoId());
-                if (lst != null) lst.removeIf(x -> x.getId().equals(c.getId()));
-                if (lst != null && lst.isEmpty()) comentariosRaizByLista.remove(c.getListaAlvoId());
+                if (lst != null)
+                    lst.removeIf(x -> x.getId().equals(c.getId()));
+                if (lst != null && lst.isEmpty())
+                    comentariosRaizByLista.remove(c.getListaAlvoId());
             }
         }
     }
@@ -400,12 +453,10 @@ public class Repositorio implements
                 avaliacaoAlvoId,
                 listaAlvoId,
                 comentarioPaiId,
-                curtidas
-        );
+                curtidas);
 
         saveComentario(comentario);
     }
-
 
     @Override
     public Comentario getComentarioById(ComentarioId id) {
@@ -444,7 +495,8 @@ public class Repositorio implements
     public void deleteComentario(ComentarioId comentarioId) {
         notNull(comentarioId, "O ID do comentário não pode ser nulo");
         Comentario c = comentariosById.remove(comentarioId);
-        if (c == null) return;
+        if (c == null)
+            return;
 
         desindexarComentario(c);
 
@@ -455,7 +507,6 @@ public class Repositorio implements
             }
         }
     }
-
 
     /*-----------------------------------------------------------------------*/
 
@@ -477,7 +528,6 @@ public class Repositorio implements
         tokens.remove(token);
     }
 
-
     @Override
     public VerificacaoEmail createToken(Token token, UserId id) {
         // expira em 1 hora
@@ -488,10 +538,44 @@ public class Repositorio implements
     }
 
     @Override
-    public VerificacaoEmail getByUserId(UserId id) {
+    public VerificacaoEmail getByUser(User user) {
         for (VerificacaoEmail verificacao : tokens.values()) {
-            if (verificacao.getUserId().equals(id)) return verificacao;
+            if (verificacao.getUserId().equals(user.getUserId()))
+                return verificacao;
         }
+        return null;
+    }
+
+    @Override
+    public void sendEmail(String recipient, String subject, String body) {
+        System.out.println("Email enviado");
+    }
+
+    @Override
+    public String gerarJwt(UserId userId, String email) {
+        return "";
+    }
+
+    @Override
+    public String login(String email, String senha) {
+        User user = usersByEmail.get(email);
+
+        notNull(user, "E-mail ou senha inválidos");
+
+        if(user.isEmailVerificado()) {
+            return "token jwt";
+        }
+
+        return "A conta não foi verificada";
+    }
+
+    @Override
+    public boolean validarSenha(String senha, String userSenha) {
+        return true;
+    }
+
+    @Override
+    public User verificarToken(String token) {
         return null;
     }
 

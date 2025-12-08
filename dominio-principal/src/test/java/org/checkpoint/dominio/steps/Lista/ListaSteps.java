@@ -81,11 +81,7 @@ public class ListaSteps extends CheckpointFuncionalidade {
         repository.saveJogo(jogo1);
         repository.saveJogo(jogo2);
 
-        if (modo.equalsIgnoreCase("privado")) {
-            listaServico.createLista(lari, listaNome, true);
-        } else {
-            listaServico.createLista(lari, listaNome, false);
-        }
+        listaServico.createLista(lari, listaNome, modo.equalsIgnoreCase("privado"));
     }
 
     @Then("o sistema deve salvar a lista")
@@ -122,7 +118,7 @@ public class ListaSteps extends CheckpointFuncionalidade {
 
     @Then("o sistema notifica que Uma lista não pode conter mais de {int} jogos")
     public void oSistemaNotificaQueUmaListaNãoPodeConterMaisDeJogos(int arg0) {
-        assertEquals(notification, "Uma lista não pode conter mais de 100 jogos");
+        assertEquals("Uma lista não pode conter mais de 100 jogos", notification);
     }
 
     @Given("que o usuário {string} duplica a lista {string} do usuario {string}")
@@ -133,11 +129,11 @@ public class ListaSteps extends CheckpointFuncionalidade {
         userServico.registerUser(emailDavi, senhaDavi, nome2);
         davi = repository.getByEmail(emailDavi);
 
-        listaServico.createLista(davi, nomeLista, true);
+        listaServico.createLista(davi, nomeLista, false);
 
         ListaJogos listaOrigem = repository.getListByTituloAndDono(nomeLista, davi.getUserId());
 
-        listaServico.duplicateLista(lari, listaOrigem.getId(), davi.getUserId());
+        listaServico.duplicateLista(lari, listaOrigem.getId());
     }
 
     @Then("a lista {string} aparece nas listas do usuário")
@@ -162,7 +158,7 @@ public class ListaSteps extends CheckpointFuncionalidade {
         ListaJogos listaOrigem = repository.getListByTituloAndDono(nomeLista, lari.getUserId());
         assertNotNull(listaOrigem, "Lista de origem não encontrada.");
 
-        listaServico.duplicateLista(lari, listaOrigem.getId(), lari.getUserId());
+        listaServico.duplicateLista(lari, listaOrigem.getId());
     }
 
     @Given("que o usuário {string} tem a lista duplicada {string}")

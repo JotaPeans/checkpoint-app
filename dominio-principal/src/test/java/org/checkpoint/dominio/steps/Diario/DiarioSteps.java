@@ -40,7 +40,7 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         lari = repository.getByEmail(emailLari);
 
         DiarioId diarioId = new DiarioId(1);
-        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<RegistroId>());
+        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<>());
         repository.saveDiario(diario);
         lari.setDiarioId(diarioId);
         repository.saveUser(lari);
@@ -80,10 +80,10 @@ public class DiarioSteps extends CheckpointFuncionalidade {
     public void oSistemaDeveSalvarORegistro() {
         Diario diario = repository.getDiario(lari.getDiarioId());
 
-        List<RegistroId> registros = diario.getRegistros();
+        List<RegistroDiario> registros = diario.getRegistros();
         assertFalse(registros.isEmpty());
 
-        RegistroId ultimoId = registros.get(registros.size() - 1);
+        RegistroId ultimoId = registros.getLast().getId();
 
         RegistroDiario registro = repository.getRegistroDiario(ultimoId);
 
@@ -132,7 +132,7 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         lari = repository.getByEmail(emailLari);
 
         DiarioId diarioId = new DiarioId(1);
-        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<RegistroId>());
+        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<>());
         repository.saveDiario(diario);
         lari.setDiarioId(diarioId);
         repository.saveUser(lari);
@@ -162,25 +162,25 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         diarioServico.addRegistro(lari, jogoId, dataInformada, null);
 
         Diario diario = repository.getDiarioByDono(lari);
-        List<RegistroId> registro = diario.getRegistros();
+        List<RegistroDiario> registro = diario.getRegistros();
 
-        diarioServico.addConquista(registro.get(0), nomeConquista, dataInformada, true);
+        diarioServico.addConquista(registro.getFirst().getId(), nomeConquista, dataInformada, true);
     }
 
     @Then("o sistema deve salvar a conquista vinculada ao jogo")
     public void oSistemaDeveSalvarAConquistaVinculadaAoJogo() {
         Diario diario = repository.getDiarioByDono(lari);
 
-        List<RegistroId> registros = diario.getRegistros();
+        List<RegistroDiario> registros = diario.getRegistros();
 
-        RegistroId registroId = registros.get(registros.size() - 1);
+        RegistroId registroId = registros.getLast().getId();
         RegistroDiario registro = repository.getRegistroDiario(registroId);
         assertNotNull(registro);
 
-        List<ConquistaId> conquistasIds = registro.getConquistas();
+        List<Conquista> conquistasIds = registro.getConquistas();
         assertFalse(conquistasIds.isEmpty(), "Nenhuma conquista foi salva no registro.");
 
-        ConquistaId conquistaId = conquistasIds.get(conquistasIds.size() - 1);
+        ConquistaId conquistaId = conquistasIds.getLast().getId();
         Conquista conquista = repository.getConquista(conquistaId);
         assertNotNull(conquista);
     }
@@ -209,10 +209,10 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         diarioServico.addRegistro(lari, jogoId, dataInformada, null);
 
         Diario diario = repository.getDiarioByDono(lari);
-        List<RegistroId> registro = diario.getRegistros();
+        List<RegistroDiario> registro = diario.getRegistros();
 
         try {
-            diarioServico.addConquista(registro.get(0), null, dataInformada, true);
+            diarioServico.addConquista(registro.getFirst().getId(), null, dataInformada, true);
         }catch (IllegalArgumentException | NullPointerException e) {
             notification = e.getMessage();
         }
@@ -247,10 +247,10 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         diarioServico.addRegistro(lari, jogoId, dataInformada, null);
 
         Diario diario = repository.getDiarioByDono(lari);
-        List<RegistroId> registro = diario.getRegistros();
+        List<RegistroDiario> registro = diario.getRegistros();
 
         try {
-            diarioServico.addConquista(registro.get(0), nomeConquista, null, true);
+            diarioServico.addConquista(registro.getFirst().getId(), nomeConquista, null, true);
         }catch (IllegalArgumentException | NullPointerException e) {
             notification = e.getMessage();
         }
@@ -267,7 +267,7 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         lari = repository.getByEmail(emailLari);
 
         DiarioId diarioId = new DiarioId(1);
-        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<RegistroId>());
+        Diario diario = new Diario(diarioId, lari.getUserId(), new ArrayList<>());
         repository.saveDiario(diario);
         lari.setDiarioId(diarioId);
         repository.saveUser(lari);
@@ -293,16 +293,16 @@ public class DiarioSteps extends CheckpointFuncionalidade {
 
         diarioServico.addRegistro(lari, jogoId, dataInformada, null);
 
-        List<RegistroId> registro = diario.getRegistros();
+        List<RegistroDiario> registro = diario.getRegistros();
 
-        diarioServico.addConquista(registro.get(0), nomeConquista, dataInformada, true);
+        diarioServico.addConquista(registro.getFirst().getId(), nomeConquista, dataInformada, true);
     }
     @When("ele tenta registrar novamente a conquista {string} para o mesmo jogo")
     public void eleTentaRegistrarNovamenteAConquistaParaOMesmoJogo(String nomeConquista) {
         try {
             Diario diario = repository.getDiarioByDono(lari);
-            List<RegistroId> registros = diario.getRegistros();
-            RegistroId registroId = registros.get(0);
+            List<RegistroDiario> registros = diario.getRegistros();
+            RegistroId registroId = registros.getFirst().getId();
 
             Date data = sdf.parse("25/10/25");
             diarioServico.addConquista(registroId, nomeConquista, data, true);
@@ -348,7 +348,7 @@ public class DiarioSteps extends CheckpointFuncionalidade {
         diarioServico.addRegistro(lari, jogoId, dataInformada, null);
 
         Diario diarioRecuperado = repository.getDiarioByDono(lari);
-        RegistroId registroId = diarioRecuperado.getRegistros().get(0);
+        RegistroId registroId = diarioRecuperado.getRegistros().getFirst().getId();
 
         boolean concluida = status.equalsIgnoreCase("concluídas");
         for (int i = 1; i <= quantidade; i++) {
@@ -359,7 +359,7 @@ public class DiarioSteps extends CheckpointFuncionalidade {
     @When("o usuário registra {int} conquistas como {string} no jogo")
     public void oUsuárioRegistraConquistasComoNoJogo(Integer quantidade, String status) throws ParseException {
         Diario diarioRecuperado = repository.getDiarioByDono(lari);
-        RegistroId registroId = diarioRecuperado.getRegistros().get(0);
+        RegistroId registroId = diarioRecuperado.getRegistros().getFirst().getId();
 
         boolean concluida = status.equalsIgnoreCase("concluídas");
         Date dataInformada = sdf.parse("15/10/2025");

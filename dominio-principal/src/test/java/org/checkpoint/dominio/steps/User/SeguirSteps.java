@@ -39,7 +39,7 @@ public class SeguirSteps extends CheckpointFuncionalidade {
 
     @When("{string} solicita seguir {string}")
     public void solicitaSeguir(String nomeSeguidor, String nomeAlvo) {
-        userServico.toggleSeguir(lari, davi);
+        userServico.toggleSeguir(lari, davi.getUserId());
     }
 
     @Then("o sistema registra imediatamente o follow")
@@ -67,13 +67,13 @@ public class SeguirSteps extends CheckpointFuncionalidade {
 
         userServico.togglePrivacidade(davi, false);
 
-        userServico.toggleSeguir(lari, davi);
+        userServico.toggleSeguir(lari, davi.getUserId());
     }
 
     @When("ele da unfollow")
     public void eleDaUnfollow() {
         try {
-            userServico.toggleSeguir(lari, davi);
+            userServico.toggleSeguir(lari, davi.getUserId());
         } catch (Exception e) {
             notification = e.getMessage();
         }
@@ -96,13 +96,13 @@ public class SeguirSteps extends CheckpointFuncionalidade {
 
         userServico.togglePrivacidade(davi, true);
 
-        userServico.toggleSeguir(lari, davi);
+        userServico.toggleSeguir(lari, davi.getUserId());
     }
 
     @When("{string} aprova a solicitação")
     public void aprovaASolicitacao(String nome) {
         try {
-            userServico.approveSeguidor(davi, lari);
+            userServico.approveSeguidor(davi, lari.getUserId());
         } catch (Exception e) {
             notification = e.getMessage();
         }
@@ -122,7 +122,7 @@ public class SeguirSteps extends CheckpointFuncionalidade {
     @When("{string} rejeita a solicitação")
     public void rejeitaASolicitacao(String nome) {
         try {
-            userServico.rejectSeguidor(davi, lari);
+            userServico.rejectSeguidor(davi, lari.getUserId());
         } catch (Exception e) {
             notification = e.getMessage();
         }

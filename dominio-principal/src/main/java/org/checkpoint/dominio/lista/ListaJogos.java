@@ -3,6 +3,7 @@ package org.checkpoint.dominio.lista;
 import org.checkpoint.dominio.jogo.JogoId;
 import org.checkpoint.dominio.user.UserId;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.commons.lang3.Validate.notNull;
@@ -14,6 +15,23 @@ public class ListaJogos {
     private boolean isPrivate;
     private List<JogoId> jogos;
     private List<UserId> curtidas;
+
+    public ListaJogos(
+            UserId donoId,
+            String titulo,
+            boolean isPrivate
+    ) {
+        notNull(donoId, "O id do dono da lista não pode ser nulo");
+        notNull(titulo, "O título não pode ser nulo");
+
+        this.id = null;
+
+        setDonoId(donoId);
+        setTitulo(titulo);
+        setIsPrivate(isPrivate);
+        setJogos(new ArrayList<>());
+        setCurtidas(new ArrayList<>());
+    }
 
     public ListaJogos(
             ListaId id,

@@ -19,11 +19,11 @@ public class CheckpointFuncionalidade {
     protected Repositorio repository = new Repositorio();
 
     public CheckpointFuncionalidade() {
-        emailServico = new EmailServico(repository);
-        userServico  = new UserServico(repository, emailServico);
+        emailServico = new EmailServico(repository, repository);
+        userServico = new UserServico(repository, repository, emailServico, repository);
         listaServico = new ListaServico(repository, repository);
-        jogoServico  = new JogoServico(repository);
-        diarioServico  = new DiarioServico(repository);
+        jogoServico = new JogoServico(repository);
+        diarioServico = new DiarioServico(repository);
         comentarioServico = new ComentarioServico(repository);
     }
 }

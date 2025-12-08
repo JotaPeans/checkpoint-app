@@ -76,7 +76,7 @@ public class TagSteps extends CheckpointFuncionalidade {
     @Then("as tags desse jogo serão atualizadas")
     public void tagsAtualizadas() {
         Jogo atualizado = jogoServico.getJogo(jogo.getId());
-        List<TagId> idsNoJogo = atualizado.getTags();
+        List<Tag> idsNoJogo = atualizado.getTags();
 
         int unicasEsperadas = new HashSet<>(tagsEsperadas).size();
         assertEquals(unicasEsperadas, idsNoJogo.size(), "Quantidade de tags no jogo deve refletir itens únicos.");
@@ -84,7 +84,7 @@ public class TagSteps extends CheckpointFuncionalidade {
         for (String nomeTag : new HashSet<>(tagsEsperadas)) {
             Tag tag = repository.getTagByName(nomeTag);
             assertNotNull(tag, "Tag deveria existir no repositório: " + nomeTag);
-            assertTrue(idsNoJogo.contains(tag.getId()), "Tag deveria estar associada ao jogo: " + nomeTag);
+            assertTrue(idsNoJogo.contains(tag), "Tag deveria estar associada ao jogo: " + nomeTag);
         }
     }
 
@@ -124,9 +124,9 @@ public class TagSteps extends CheckpointFuncionalidade {
     public void oSistemaIgnoraADuplicaçãoEAtualizaAsTags() {
         Jogo jogoAtualizado = repository.getJogo(jogo.getId());
 
-        List<TagId> tagsDoJogo = jogoAtualizado.getTags();
+        List<Tag> tagsDoJogo = jogoAtualizado.getTags();
         List<String> nomesDasTags = tagsDoJogo.stream()
-                .map(tagId -> repository.getTagById(tagId).getNome())
+                .map(Tag::getNome)
                 .toList();
 
         long total   = nomesDasTags.size();
@@ -163,7 +163,7 @@ public class TagSteps extends CheckpointFuncionalidade {
     public void aTagNãoDeveMaisEstarAssociadaAoJogo(String nomeTag) {
         Jogo jogoAtualizado = repository.getJogo(jogo.getId());
         List<String> nomesAtuais = jogoAtualizado.getTags().stream()
-                .map(tagId -> repository.getTagById(tagId).getNome())
+                .map(Tag::getNome)
                 .toList();
 
         assertFalse(nomesAtuais.contains(nomeTag), "A tag ainda está associada ao jogo (algum voto restou).");

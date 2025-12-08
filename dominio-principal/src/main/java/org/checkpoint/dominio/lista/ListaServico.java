@@ -22,6 +22,29 @@ public class ListaServico {
         this.userRepositorio = userRepositorio;
     }
 
+    public ListaJogos getListaById(User dono, ListaId listaId) {
+        ListaJogos lista = this.listaJogosRepositorio.getList(listaId);
+
+        notNull(lista, "Lista não encontrada");
+
+        if(lista.getIsPrivate() && lista.getDonoId().equals(dono.getUserId())) {
+            return lista;
+        }
+        else if(!lista.getIsPrivate()) {
+            return lista;
+        }
+
+        throw new IllegalArgumentException("Lista não encontrada");
+    }
+
+    public List<ListaJogos> listListasByUser(User dono) {
+        return this.listaJogosRepositorio.getListByDono(dono.getUserId());
+    }
+
+    public List<ListaJogos> getListasPublicas(User user) {
+        return this.listaJogosRepositorio.getPublicLists(user.getUserId());
+    }
+
     // =====================
     // Criação e duplicação
     // =====================
@@ -38,16 +61,15 @@ public class ListaServico {
         userRepositorio.saveUser(dono);
     }
 
-    public void duplicateLista(User novoDono, ListaId listaOrigemId, UserId donoOrigem) {
+    public void duplicateLista(User novoDono, ListaId listaOrigemId) {
         notNull(novoDono, "O dono da nova lista não pode ser nulo");
         notNull(listaOrigemId, "O id da lista de origem não pode ser nulo");
-        notNull(donoOrigem, "O dono da lista de origem não pode ser nulo");
 
         ListaJogos origem = this.listaJogosRepositorio.getList(listaOrigemId);
         notNull(origem, "Lista de origem não encontrada");
 
-        if (!origem.getDonoId().equals(donoOrigem)) {
-            throw new IllegalArgumentException("A lista não pertence ao usuário de origem informado");
+        if(origem.getIsPrivate() && !origem.getDonoId().equals(novoDono.getUserId())) {
+            throw new IllegalArgumentException("Lista não encontrada");
         }
 
         String novoTitulo = "CÓPIA " + origem.getTitulo();
@@ -67,6 +89,18 @@ public class ListaServico {
         novoDono.setListas(listasDoUsuario);
 
         userRepositorio.saveUser(novoDono);
+    }
+
+    public void deleteLista(User user, ListaId listaId) {
+        notNull(user, "O usuario não pode ser nulo");
+        notNull(listaId, "O id da lista não pode ser nulo");
+
+        ListaJogos listaJogos = this.listaJogosRepositorio.getList(listaId);
+        notNull(listaJogos, "Lista não encontrada");
+
+        isTrue(listaJogos.getDonoId().equals(user.getUserId()), "Lista não encontrada");
+
+        this.listaJogosRepositorio.deleteList(listaId);
     }
 
     // =====================
@@ -104,26 +138,19 @@ public class ListaServico {
         int totalJogos = jogosLista.size() + novosJogos.size();
         isTrue(totalJogos <= 100, "Uma lista não pode conter mais de 100 jogos");
 
-        // adiciona apenas jogos que ainda não estão na lista
-        for (JogoId jogoId : novosJogos) {
-            if (!jogosLista.contains(jogoId)) {
-                jogosLista.add(jogoId);
-            }
-        }
-
-        listaJogos.setJogos(jogosLista);
+        listaJogos.setJogos(novosJogos);
         this.listaJogosRepositorio.saveList(listaJogos);
     }
 
-    public void togglePrivacidade(User user, ListaId listaId, Boolean publica) {
+    public void togglePrivacidade(User user, ListaId listaId, Boolean isPrivate) {
         notNull(user, "O usuario não pode ser nulo");
         notNull(listaId, "O id da lista não pode ser nulo");
-        notNull(publica, "O parâmetro 'publica' não pode ser nulo");
+        notNull(isPrivate, "O parâmetro 'publica' não pode ser nulo");
 
         ListaJogos listaJogos = this.listaJogosRepositorio.getList(listaId);
         notNull(listaJogos, "Lista não encontrada");
 
-        listaJogos.setIsPrivate(!listaJogos.getIsPrivate());
+        listaJogos.setIsPrivate(isPrivate);
         this.listaJogosRepositorio.saveList(listaJogos);
     }
 

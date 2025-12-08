@@ -19,7 +19,6 @@ public class CadastroSteps extends CheckpointFuncionalidade {
     private String emailLari = "lss2@cesar.school";
     private String notification;
 
-
     @Given("que não existe um usuário com o e-mail {string} no sistema")
     public void queNãoExisteUmUsuárioComOEMailNoSistema(String email) {
         assertFalse(userServico.isEmailAlreadyInUse(email));
@@ -34,7 +33,7 @@ public class CadastroSteps extends CheckpointFuncionalidade {
     public void queOUsuárioComEmailForneceuOTokenDeVerificacaoDentroDeHoraDepoisDoEnvio(String email, int arg0) {
         userServico.registerUser(email, senhaLari, nomeLari);
         User user = repository.getByEmail(email);
-        VerificacaoEmail ver = repository.getByUserId(user.getUserId());
+        VerificacaoEmail ver = repository.getByUser(user);
         Token token = ver.getToken();
         userServico.verifyUserEmail(token);
     }
@@ -143,20 +142,24 @@ public class CadastroSteps extends CheckpointFuncionalidade {
     }
 
     @Then("o sistema notifica que A senha deve conter, no mínimo, pelo menos uma letra minúscula, pelo menos uma letra maiúscula, pelo menos um número, pelo menos um caracter especial, e pelo menos {int} digitos")
-    public void oSistemaNotificaQueASenhaDeveConterNoMínimoPeloMenosUmaLetraMinúsculaPeloMenosUmaLetraMaiúsculaPeloMenosUmNúmeroPeloMenosUmCaracterEspecialEPeloMenosDigitos(int arg0) {
-        assertEquals("A senha deve conter, no mínimo, pelo menos uma letra minúscula, pelo menos uma letra maiúscula, pelo menos um número, pelo menos um caracter especial, e pelo menos 8 digitos", notification);
+    public void oSistemaNotificaQueASenhaDeveConterNoMínimoPeloMenosUmaLetraMinúsculaPeloMenosUmaLetraMaiúsculaPeloMenosUmNúmeroPeloMenosUmCaracterEspecialEPeloMenosDigitos(
+            int arg0) {
+        assertEquals(
+                "A senha deve conter, no mínimo, pelo menos uma letra minúscula, pelo menos uma letra maiúscula, pelo menos um número, pelo menos um caracter especial, e pelo menos 8 digitos",
+                notification);
     }
 
     @Given("que o usuário com email {string} fornece o token de verificacao depois de {int} hora")
     public void queOUsuárioComEmailForneceOTokenDeVerificacaoDepoisDeHora(String email, int horas) {
         userServico.registerUser(email, senhaLari, nomeLari);
         User user = repository.getByEmail(email);
-        VerificacaoEmail ver = repository.getByUserId(user.getUserId());
+        VerificacaoEmail ver = repository.getByUser(user);
         long millis = System.currentTimeMillis() - (horas * 60L * 60L * 1000L);
         ver.setDataExpiracao(new Date(millis));
         Token token = ver.getToken();
         try {
-            userServico.verifyUserEmail(token);;
+            userServico.verifyUserEmail(token);
+            ;
         } catch (IllegalArgumentException | NullPointerException e) {
             notification = e.getMessage();
         }

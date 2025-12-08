@@ -1,7 +1,7 @@
 package org.checkpoint.dominio;
 
+// import static io.cucumber.core.options.Constants.FEATURES_PROPERTY_NAME;
 import static io.cucumber.core.options.Constants.PLUGIN_PROPERTY_NAME;
-import static io.cucumber.core.options.Constants.FEATURES_PROPERTY_NAME;
 import static io.cucumber.core.options.Constants.GLUE_PROPERTY_NAME;
 
 import org.junit.platform.suite.api.ConfigurationParameter;

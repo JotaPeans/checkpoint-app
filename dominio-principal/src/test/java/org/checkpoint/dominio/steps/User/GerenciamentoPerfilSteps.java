@@ -49,7 +49,7 @@ public class GerenciamentoPerfilSteps extends CheckpointFuncionalidade {
         userServico.registerUser(emailJp, senhaJp, nomeJp);
         jp = repository.getByEmail(emailJp);
 
-        userServico.toggleSeguir(jp, lari);
+        userServico.toggleSeguir(jp, lari.getUserId());
     }
 
     @Then("o sistema deve atualizar o avatar, substituindo a imagem anterior")
@@ -69,46 +69,77 @@ public class GerenciamentoPerfilSteps extends CheckpointFuncionalidade {
 
     @Then("apenas seguidores aprovados podem visualizar as informações do perfil")
     public void apenasSeguidoresAprovadosPodemVisualizarAsInformaçõesDoPerfil() {
-        assertEquals(userServico.getInformacoes(jp, lari), "Você não é seguidor desta pessoa.");
+        try {
+            notification = userServico.getInformacoes(jp, lari.getUserId()).getEmail();
+        } catch (Exception ex){
+            notification = ex.getMessage();
+        }
+
+        assertNull(notification);
     }
 
     @Then("qualquer seguidor pode visualizar as informações do perfil")
     public void qualquerSeguidorPodeVisualizarAsInformaçõesDoPerfil() {
-        assertNotSame(userServico.getInformacoes(jp, lari), "Você não é seguidor desta pessoa.");
+        try {
+            notification = userServico.getInformacoes(jp, lari.getUserId()).getEmail();
+        } catch (Exception ex){
+            notification = ex.getMessage();
+        }
+
+        assertNotNull(notification);
     }
 
     @When("o usuário {string} solicita para seguir o perfil")
     public void oUsuárioSolicitaParaSeguirOPerfil(String nomeSolicitante) {
         User solicitante = nomeSolicitante.equals(nomeJp) ? jp : lari;
-        userServico.toggleSeguir(solicitante, lari);
+        userServico.toggleSeguir(solicitante, lari.getUserId());
     }
 
     @When("Lari {string} a solicitação")
     public void LariASolicitacao( String acao) {
         if (acao.equalsIgnoreCase("aceita")) {
-            userServico.approveSeguidor(lari, jp);
+            userServico.approveSeguidor(lari, jp.getUserId());
         } else if (acao.equalsIgnoreCase("rejeita")) {
-            userServico.rejectSeguidor(lari, jp);
+            userServico.rejectSeguidor(lari, jp.getUserId());
         }
     }
 
     @Then("a solicitação deve ficar pendente até aprovação ou rejeição manual")
     public void aSolicitaçãoDeveFicarPendenteAtéAprovaçãoOuRejeiçãoManual() {
         assertTrue(lari.getSolicitacoesPendentes().contains(jp.getUserId()));
-        assertEquals(userServico.getInformacoes(jp, lari), "Você não é seguidor desta pessoa.");
+        try {
+            notification = userServico.getInformacoes(jp, lari.getUserId()).getEmail();
+        } catch (Exception ex){
+            notification = ex.getMessage();
+        }
+
+        assertNull(notification);
     }
 
     @Then("{string} passa a ter acesso às informações do perfil")
     public void passaATerAcessoÀsInformaçõesDoPerfil(String arg0) {
         assertTrue(lari.getSeguidores().contains(jp.getUserId()));
-        assertNotSame(userServico.getInformacoes(jp, lari), "Você não é seguidor desta pessoa.");
+
+        try {
+            notification = userServico.getInformacoes(jp, lari.getUserId()).getEmail();
+        } catch (Exception ex){
+            notification = ex.getMessage();
+        }
+
+        assertNotNull(notification);
     }
 
     @Then("{string} não terá acesso às informações do perfil")
     public void nãoTeráAcessoÀsInformaçõesDoPerfil(String arg0) {
         assertFalse(lari.getSeguidores().contains(jp.getUserId()));
-        assertEquals(userServico.getInformacoes(jp, lari), "Você não é seguidor desta pessoa.");
 
+        try {
+            notification = userServico.getInformacoes(jp, lari.getUserId()).getEmail();
+        } catch (Exception ex){
+            notification = ex.getMessage();
+        }
+
+        assertNull(notification);
     }
 
     @Given("que o usuário {string} inicia a atualização do avatar enviando a url {string}")

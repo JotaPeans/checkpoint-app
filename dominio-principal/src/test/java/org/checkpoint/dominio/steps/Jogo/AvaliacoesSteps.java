@@ -76,7 +76,7 @@ public class AvaliacoesSteps extends CheckpointFuncionalidade {
 
     @Then("o sistema notifica que A nota tem que estar entre {double} e {int}")
     public void oSistemaNotificaQueANotaTemQueEstarEntreE(double arg0, int arg1) {
-        assertEquals(notification, "A nota tem que estar entre 0.5 e 5");
+        assertEquals("A nota tem que estar entre 0.5 e 5", notification);
     }
 
     @When("ele atribui a nota {double} e a crítica {string}")
@@ -93,7 +93,7 @@ public class AvaliacoesSteps extends CheckpointFuncionalidade {
     public void oComentárioEnviado() {
         List<Avaliacao> avaliacoes = repository.getAvaliacoesByJogoId(jogo.getId());
 
-        Avaliacao ultima = avaliacoes.get(avaliacoes.size() - 1);
+        Avaliacao ultima = avaliacoes.getLast();
 
         assertEquals(lari.getUserId(), ultima.getAutorId(), "Autor da avaliação não confere.");
 
@@ -102,17 +102,17 @@ public class AvaliacoesSteps extends CheckpointFuncionalidade {
 
     @Then("o sistema notifica que A crítica deve ter no mínimo {int} caracteres")
     public void oSistemaNotificaQueACríticaDeveTerNoMínimoCaracteres(int arg0) {
-        assertEquals(notification, "A crítica deve ter no mínimo 20 caracteres");
+        assertEquals("A crítica deve ter no mínimo 20 caracteres", notification);
     }
 
     @Then("o sistema notifica que A crítica deve ter no máximo {int} caracteres")
     public void oSistemaNotificaQueACríticaDeveTerNoMáximoCaracteres(int arg0) {
-        assertEquals(notification, "A crítica deve ter no máximo 2000 caracteres");
+        assertEquals("A crítica deve ter no máximo 2000 caracteres", notification);
     }
 
     @Then("o sistema notifica que A nota não pode ser nula")
     public void oSistemaNotificaQueANotaNãoPodeSerNula() {
-        assertEquals(notification, "A nota não pode ser nula");
+        assertEquals("A nota não pode ser nula", notification);
     }
 
     @When("ele atribui a crítica {string}")
@@ -157,14 +157,14 @@ public class AvaliacoesSteps extends CheckpointFuncionalidade {
 
         List<Avaliacao> avaliacoes = repository.getAvaliacoesByJogoId(jogo.getId());
 
-        Avaliacao alvo = avaliacoes.get(avaliacoes.size() - 1);
+        Avaliacao alvo = avaliacoes.getLast();
         avaliacaoAlvoId = alvo.getId();
 
         totalAvaliacoesAntesEdicao = avaliacoes.size();
         mediaAntesEdicao = jogo.getNota();
 
         try {
-            jogoServico.editAvaliacao(avaliacaoAlvoId, nota, critica);
+            jogoServico.editAvaliacao(lari, avaliacaoAlvoId, nota, critica);
         } catch (IllegalArgumentException | NullPointerException e) {
             notification = e.getMessage();
         }
