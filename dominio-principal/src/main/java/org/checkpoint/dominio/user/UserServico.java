@@ -131,13 +131,11 @@ public class UserServico {
             throw new IllegalArgumentException("O limite de jogos favoritos é 4");
         }
 
-
         jogosFavoritos.add(jogo.getId());
 
         user.setJogosFavoritos(jogosFavoritos);
         this.userRepositorio.saveUser(user);
     }
-
 
     public void removeJogoFavorito(User user, Jogo jogo) {
         notNull(user, "O usuário não pode ser nulo");
