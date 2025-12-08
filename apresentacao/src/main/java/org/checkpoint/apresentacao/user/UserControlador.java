@@ -6,6 +6,9 @@ import java.util.Map;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.checkpoint.dominio.email.Token;
+import org.checkpoint.dominio.jogo.Jogo;
+import org.checkpoint.dominio.jogo.JogoId;
+import org.checkpoint.dominio.jogo.JogoServico;
 import org.checkpoint.dominio.user.User;
 import org.checkpoint.dominio.user.UserId;
 import org.checkpoint.dominio.user.UserServico;
@@ -24,6 +27,8 @@ import org.springframework.web.servlet.view.RedirectView;
 @RequestMapping("/api/user")
 public class UserControlador {
     private @Autowired UserServico userServico;
+
+    private @Autowired JogoServico jogoServico;
 
     private @Autowired AuthUtil authUtil;
 
@@ -279,4 +284,56 @@ public class UserControlador {
             return ResponseEntity.badRequest().body(json);
         }
     }
+
+    @PostMapping("/jogo-favorito/{id}")
+    public ResponseEntity<String> addJogoFavorito(HttpServletRequest request, @PathVariable("id") Integer id) {
+        User authenticatedUser = authUtil.getAuth(request);
+
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Map<String, Object> map = new HashMap<>();
+
+
+        try {
+            Jogo jogo = jogoServico.getJogo(new JogoId(id));
+            userServico.addJogoFavorito(authenticatedUser, jogo);
+
+            map.put("message", "Jogo adicionado aos favoritos com sucesso");
+            String json = gson.toJson(map);
+
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            map.put("message", e.getMessage());
+            String json = gson.toJson(map);
+            return ResponseEntity.badRequest().body(json);
+        }
+    }
+
+    @DeleteMapping("/jogo-favorito/{id}")
+    public ResponseEntity<String> removeJogoFavorito(HttpServletRequest request, @PathVariable("id") Integer id) {
+        User authenticatedUser = authUtil.getAuth(request);
+
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Map<String, Object> map = new HashMap<>();
+
+        try {
+            Jogo jogo = jogoServico.getJogo(new JogoId(id));
+            userServico.removeJogoFavorito(authenticatedUser, jogo);
+
+            map.put("message", "Jogo removido dos favoritos com sucesso");
+            String json = gson.toJson(map);
+
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            map.put("message", e.getMessage());
+            String json = gson.toJson(map);
+            return ResponseEntity.badRequest().body(json);
+        }
+    }
+
 }
