@@ -1,5 +1,6 @@
 import { api, apiWrapper, type MessageType } from "@/lib/api";
 import type { ListaJogos } from "./ListaJogos";
+import type { PaginatedResponse } from "../generalTypes";
 
 interface ListaBody {
   titulo: string;
@@ -49,6 +50,27 @@ export const getListasPublicas = async () => {
   }, "get-listas-publicas");
 };
 
+export const getListasPublicasPaginated = async ({
+  page,
+  size,
+}: {
+  page: number;
+  size: number;
+}) => {
+  return await apiWrapper(async () => {
+    const { data } = await api.get<PaginatedResponse<ListaJogos>>(
+      `/lista/list/public/paginated`,
+      {
+        params: {
+          page: page - 1,
+          size: size,
+        },
+      }
+    );
+    return data;
+  }, "get-listas-publicas");
+};
+
 export const createLista = async (body: ListaBody) => {
   return await apiWrapper(async () => {
     const { data } = await api.post<MessageType>(`/lista`, body);
@@ -61,10 +83,7 @@ export const updateJogosByListaId = async (
   body: JogosBody
 ) => {
   return await apiWrapper(async () => {
-    const { data } = await api.patch<MessageType>(
-      `/lista/${id}/jogo`,
-      body
-    );
+    const { data } = await api.patch<MessageType>(`/lista/${id}/jogo`, body);
     return data;
   }, "change-lista-jogos-by-lista-id");
 };
