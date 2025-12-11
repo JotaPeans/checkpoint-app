@@ -136,6 +136,86 @@ public class ListaControlador {
         }
     }
 
+    @GetMapping("/list/public/paginated")
+    public ResponseEntity<?> getListasPublicasPaginadas(
+            HttpServletRequest request,
+            @RequestParam(value="page", defaultValue = "0") int page,
+            @RequestParam(value="size", defaultValue = "10") int size) {
+
+        User authenticatedUser = authUtil.getAuth(request);
+
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Obtém as listas paginadas
+            List<ListaJogos> listas = listaServico.getListasPublicasPaginadas(
+                    authenticatedUser,
+                    page,
+                    size
+            );
+
+            // Obtém informações de paginação
+            ListaServico.PaginationInfo paginationInfo =
+                    listaServico.getListasPublicasPaginationInfo(authenticatedUser, size);
+
+            // Monta a resposta com dados e metadados de paginação
+            response.put("data", listas);
+            response.put("pagination", Map.of(
+                    "currentPage", page,
+                    "pageSize", size,
+                    "totalItems", paginationInfo.getTotalItems(),
+                    "totalPages", paginationInfo.getTotalPages(),
+                    "hasNext", page < paginationInfo.getTotalPages() - 1,
+                    "hasPrevious", page > 0
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+            String json = gson.toJson(response);
+            return ResponseEntity.badRequest().body(json);
+        }
+    }
+
+    @GetMapping("/list/public/iterator")
+    public ResponseEntity<?> getListasPublicasComIterator(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "10") int pageSize) {
+
+        User authenticatedUser = authUtil.getAuth(request);
+
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Cria o iterator
+            ListaServico.ListasPublicasIterator iterator =
+                    listaServico.getListasPublicasIterator(authenticatedUser, pageSize);
+
+            // Retorna informações do iterator e a primeira página
+            response.put("firstPage", iterator.nextPage());
+            response.put("info", Map.of(
+                    "totalItems", iterator.getTotalItems(),
+                    "totalPages", iterator.getTotalPages(),
+                    "pageSize", pageSize,
+                    "hasNextPage", iterator.hasNextPage()
+            ));
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+            String json = gson.toJson(response);
+            return ResponseEntity.badRequest().body(json);
+        }
+    }
+
     @PatchMapping("/{id}/jogo")
     public ResponseEntity<?> addJogoToLista(HttpServletRequest request, @PathVariable("id") Integer id, @RequestBody UpdateJogoListaDTO data) {
         User authenticatedUser = authUtil.getAuth(request);

@@ -6,7 +6,9 @@ import org.checkpoint.dominio.user.UserId;
 import org.checkpoint.dominio.user.UserRepositorio;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
@@ -20,6 +22,78 @@ public class ListaServico {
         notNull(userRepositorio, "O repositório de usuários não pode ser nulo");
         this.listaJogosRepositorio = listaJogosRepositorio;
         this.userRepositorio = userRepositorio;
+    }
+
+    public static class ListasPublicasIterator implements Iterator<ListaJogos> {
+        private final List<ListaJogos> listas;
+        private int currentPosition = 0;
+        private final int pageSize;
+        private int currentPage = 0;
+
+        public ListasPublicasIterator(List<ListaJogos> listas, int pageSize) {
+            this.listas = listas;
+            this.pageSize = pageSize;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return currentPosition < listas.size();
+        }
+
+        @Override
+        public ListaJogos next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException("Não há mais listas para iterar");
+            }
+            return listas.get(currentPosition++);
+        }
+
+        public List<ListaJogos> nextPage() {
+            List<ListaJogos> page = new ArrayList<>();
+            int startIndex = currentPage * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, listas.size());
+
+            if (startIndex >= listas.size()) {
+                return page; // Retorna lista vazia se não há mais páginas
+            }
+
+            for (int i = startIndex; i < endIndex; i++) {
+                page.add(listas.get(i));
+            }
+
+            currentPage++;
+            return page;
+        }
+
+        public boolean hasNextPage() {
+            return (currentPage * pageSize) < listas.size();
+        }
+
+        public int getTotalPages() {
+            return (int) Math.ceil((double) listas.size() / pageSize);
+        }
+
+        public int getTotalItems() {
+            return listas.size();
+        }
+
+        public List<ListaJogos> goToPage(int pageNumber) {
+            if (pageNumber < 0 || pageNumber >= getTotalPages()) {
+                throw new IllegalArgumentException("Número de página inválido");
+            }
+
+            currentPage = pageNumber;
+            List<ListaJogos> page = new ArrayList<>();
+            int startIndex = currentPage * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, listas.size());
+
+            for (int i = startIndex; i < endIndex; i++) {
+                page.add(listas.get(i));
+            }
+
+            currentPage++; // Prepara para a próxima chamada de nextPage
+            return page;
+        }
     }
 
     public ListaJogos getListaById(User dono, ListaId listaId) {
@@ -43,6 +117,67 @@ public class ListaServico {
 
     public List<ListaJogos> getListasPublicas(User user) {
         return this.listaJogosRepositorio.getPublicLists(user.getUserId());
+    }
+
+    public ListasPublicasIterator getListasPublicasIterator(User user, int pageSize) {
+        notNull(user, "O usuário não pode ser nulo");
+        isTrue(pageSize > 0, "O tamanho da página deve ser maior que zero");
+
+        List<ListaJogos> listas = this.listaJogosRepositorio.getPublicLists(user.getUserId());
+        return new ListasPublicasIterator(listas, pageSize);
+    }
+
+    public List<ListaJogos> getListasPublicasPaginadas(User user, int pageNumber, int pageSize) {
+        notNull(user, "O usuário não pode ser nulo");
+        isTrue(pageNumber >= 0, "O número da página deve ser maior ou igual a zero");
+        isTrue(pageSize > 0, "O tamanho da página deve ser maior que zero");
+
+        List<ListaJogos> todasListas = this.listaJogosRepositorio.getPublicLists(user.getUserId());
+
+        int startIndex = pageNumber * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, todasListas.size());
+
+        if (startIndex >= todasListas.size()) {
+            return new ArrayList<>();
+        }
+
+        return todasListas.subList(startIndex, endIndex);
+    }
+
+
+    public PaginationInfo getListasPublicasPaginationInfo(User user, int pageSize) {
+        notNull(user, "O usuário não pode ser nulo");
+        isTrue(pageSize > 0, "O tamanho da página deve ser maior que zero");
+
+        List<ListaJogos> listas = this.listaJogosRepositorio.getPublicLists(user.getUserId());
+        int totalItems = listas.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+        return new PaginationInfo(totalItems, totalPages, pageSize);
+    }
+
+    public static class PaginationInfo {
+        private final int totalItems;
+        private final int totalPages;
+        private final int pageSize;
+
+        public PaginationInfo(int totalItems, int totalPages, int pageSize) {
+            this.totalItems = totalItems;
+            this.totalPages = totalPages;
+            this.pageSize = pageSize;
+        }
+
+        public int getTotalItems() {
+            return totalItems;
+        }
+
+        public int getTotalPages() {
+            return totalPages;
+        }
+
+        public int getPageSize() {
+            return pageSize;
+        }
     }
 
     // =====================
