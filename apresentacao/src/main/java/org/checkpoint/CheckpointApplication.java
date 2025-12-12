@@ -15,6 +15,7 @@ import org.checkpoint.dominio.lista.ListaJogosRepositorio;
 import org.checkpoint.dominio.lista.ListaServico;
 import org.checkpoint.dominio.user.UserRepositorio;
 import org.checkpoint.dominio.user.UserServico;
+import org.checkpoint.dominio.user.observer.EmailFollowObserver;
 import org.checkpoint.persistencia.jpa.autenticacao.AutenticacaoImpl;
 import org.checkpoint.persistencia.jpa.email.ResendStrategy;
 import org.checkpoint.utils.AuthUtil;
@@ -53,8 +54,14 @@ public class CheckpointApplication {
     @Bean
     UserServico userServico(UserRepositorio repositorio, DiarioRepositorio diarioRepositorio,
                             VerificacaoEmailRepositorio verificacaoEmailRepositorio, Autenticacao autenticacao) {
-        return new UserServico(repositorio, diarioRepositorio,
-                new EmailServico(verificacaoEmailRepositorio, resendStrategy()), autenticacao);
+        EmailServico emailServico = new EmailServico(verificacaoEmailRepositorio, resendStrategy());
+
+        UserServico userServico = new UserServico(repositorio, diarioRepositorio, emailServico, autenticacao);
+        
+        EmailFollowObserver emailFollowObserver = new EmailFollowObserver(emailServico);
+        userServico.adicionarObservador(emailFollowObserver);
+
+        return userServico;
     }
 
     @Bean

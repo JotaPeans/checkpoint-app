@@ -8,6 +8,7 @@ import org.checkpoint.dominio.email.Token;
 import org.checkpoint.dominio.email.VerificacaoEmail;
 import org.checkpoint.dominio.jogo.Jogo;
 import org.checkpoint.dominio.jogo.JogoId;
+import org.checkpoint.dominio.user.observer.FollowEventObserver;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,6 +24,9 @@ public class UserServico {
     private final EmailSenderService emailSenderService;
     private final Autenticacao autenticacao;
 
+    // Lista de observers para eventos de seguir
+    private final List<FollowEventObserver> observadores;
+
     public UserServico(UserRepositorio userRepositorio, DiarioRepositorio diarioRepositorio,
                        EmailSenderService emailSenderService, Autenticacao autenticacao) {
         notNull(userRepositorio, "O repositório de usuários não pode ser nulo");
@@ -34,6 +38,21 @@ public class UserServico {
         this.diarioRepositorio = diarioRepositorio;
         this.emailSenderService = emailSenderService;
         this.autenticacao = autenticacao;
+        this.observadores = new ArrayList<>();
+    }
+
+    public void adicionarObservador(FollowEventObserver observador) {
+        observadores.add(observador);
+    }
+
+    public void removerObservador(FollowEventObserver observador) {
+        observadores.remove(observador);
+    }
+
+    public void solicitarSeguir(User solicitante, User alvo) {
+        for (FollowEventObserver observador : observadores) {
+            observador.onSolicitacaoParaSeguir(solicitante, alvo);
+        }
     }
 
     public String login(String email, String senha) {
@@ -219,32 +238,17 @@ public class UserServico {
             // Usuário é privado -> cria solicitação pendente
             List<UserId> solicitacoesPendentes = toUser.getSolicitacoesPendentes();
 
-            if (solicitacoesPendentes.contains(fromUser.getUserId()) == false) {
+            if (!solicitacoesPendentes.contains(fromUser.getUserId())) {
                 solicitacoesPendentes.add(fromUser.getUserId());
                 toUser.setSolicitacoesPendentes(solicitacoesPendentes);
 
-                this.emailSenderService.sendEmail(toUser.getEmail(), "Solicitação para seguir", "O usuario <b>" + fromUser.getNome() + "</b> gostaria de seguir você.");
+                // Notifica os observers sobre a solicitação
+                solicitarSeguir(fromUser, toUser);
             }
         } else {
             // Usuário é público -> segue diretamente
             List<UserId> fromUserSeguindo = fromUser.getSeguindo();
-
             List<UserId> toUserSeguidores = toUser.getSeguidores();
-
-            if (toUserSeguidores.contains(fromUser.getUserId()) == false) {
-                toUserSeguidores.add(fromUser.getUserId());
-                toUser.setSeguidores(toUserSeguidores);
-
-                fromUserSeguindo.add(toUser.getUserId());
-                fromUser.setSeguindo(fromUserSeguindo);
-            } else {
-                // Já segue-> desfaz
-                toUserSeguidores.remove(fromUser.getUserId());
-                toUser.setSeguidores(toUserSeguidores);
-
-                fromUser.getSeguindo().remove(toUser.getUserId());
-                fromUser.setSeguindo(fromUserSeguindo);
-            }
         }
 
         userRepositorio.saveUser(fromUser);
