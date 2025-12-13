@@ -78,6 +78,18 @@ public class UserControlador {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", "");
+        cookie.setHttpOnly(true); // não acessível via JS (protege contra XSS)
+        cookie.setSecure(true); // exige HTTPS
+        cookie.setPath("/"); // cookie enviado para toda a aplicação
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("ok");
+    }
+
     @GetMapping("/verify-email/{token}")
     public Object verifyUserEmail(@PathVariable("token") String token) {
         Map<String, Object> map = new HashMap<>();

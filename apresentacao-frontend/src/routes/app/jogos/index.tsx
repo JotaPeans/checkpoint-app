@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 
 import Jogos from "./-components/Jogos";
 import { useUser } from "../-components/AppContenxt";
+import Logout from "./-components/Logout";
 
 export const Route = createFileRoute("/app/jogos/")({
   component: RouteComponent,
@@ -62,6 +63,8 @@ function RouteComponent() {
           >
             <User /> Perfil
           </Link>
+
+          <Logout/>
         </div>
       </div>
 

@@ -24,3 +24,10 @@ export const login = async (dados: DadosLogin) => {
     return data;
   }, "login");
 };
+
+export const logout = async () => {
+  return await apiWrapper(async () => {
+    const { data } = await api.post<string>("/user/logout");
+    return data;
+  }, "logout");
+};
