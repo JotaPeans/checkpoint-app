@@ -39,6 +39,8 @@ Essa etapa é necessária pois o sistema precisa de confirmação de email do us
 openssl rand -hex 32
 ```
 
+Para executar a aplicação spring boot, basta entrar na pasta `apresentacao/src/main/java` e executar o arquivo CheckpointApplication, o qual possui o método main.
+
 Essas duas variáveis de ambiente precisam estar em um arquivo `.env` dentro da pasta **root** do projeto.
 
 ### O frontend precisa apenas de uma variável de ambiente:
@@ -49,3 +51,15 @@ Essas duas variáveis de ambiente precisam estar em um arquivo `.env` dentro da 
 Essa variável de ambiente precisa estar em um arquivo `.env` dentro da pasta `apresentacao-frontend`
 
 Mas precisa inserir manualmente as variáveis de ambiente do backend (RESEND_API_KEY e JWT_SECRET)
+
+Para executar o front-end (aplicação em react), basta rodar os comandos:
+
+Instalação das dependências:
+```bash
+npm i
+```
+
+Rodar o projeto:
+```bash
+npm run dev
+```
