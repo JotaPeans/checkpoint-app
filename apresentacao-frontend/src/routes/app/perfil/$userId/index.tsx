@@ -12,6 +12,8 @@ import { useUser } from "../../-components/AppContenxt";
 import { listListasByIds } from "@/domain/lista/queries";
 import ListaCard from "../../listas/-components/ListaCard";
 import SolicitacoesDropdown from "./-components/SolicitacoesDropdown";
+import EditProfile from "./-components/EditProfile";
+import EditAvatar from "./-components/EditAvatar";
 
 export const Route = createFileRoute("/app/perfil/$userId/")({
   component: RouteComponent,
@@ -87,14 +89,20 @@ const PublicProfile = ({ user }: { user: User }) => {
         <div className="w-full flex items-center flex-col lg:flex-row gap-4">
           <div className="flex items-center gap-4">
             <Avatar className="size-24">
-              <AvatarImage
-                src={user.avatarUrl}
-                alt={user.nome}
-                width={3000}
-                height={3000}
-                className="object-cover"
-              />
-              <AvatarFallback>{user.nome.substring(0, 2)}</AvatarFallback>
+              {authenticatedUser.userId.id === user.userId.id ? (
+                <EditAvatar />
+              ) : (
+                <>
+                  <AvatarImage
+                    src={user.avatarUrl}
+                    alt={user.nome}
+                    width={3000}
+                    height={3000}
+                    className="object-cover"
+                  />
+                  <AvatarFallback>{user.nome.substring(0, 2)}</AvatarFallback>
+                </>
+              )}
             </Avatar>
             <div className="flex flex-col gap-4">
               <div>
@@ -115,6 +123,8 @@ const PublicProfile = ({ user }: { user: User }) => {
             </div>
           </div>
           <p className="text-justify">{user.bio}</p>
+
+          {authenticatedUser.userId.id === user.userId.id && <EditProfile />}
         </div>
       </Card>
 

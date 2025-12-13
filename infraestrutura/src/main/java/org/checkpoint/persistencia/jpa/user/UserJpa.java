@@ -19,6 +19,8 @@ public class UserJpa {
     public String email;
     public String nome;
     public String senha;
+
+    @Column(length = 3000)
     public String avatarUrl;
 
     @Column(length = 3000)

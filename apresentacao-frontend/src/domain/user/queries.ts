@@ -10,6 +10,15 @@ export interface UpdateAvatarBody {
   avatarUrl: string;
 }
 
+export interface UpdateProfileBody {
+  nome: string;
+  bio: string;
+  redesSociais: {
+    plataforma: string;
+    username: string;
+  }[];
+}
+
 export interface TogglePrivacidadeBody {
   isPrivate: boolean;
 }
@@ -71,7 +80,7 @@ export const updateAvatar = async (body: UpdateAvatarBody) => {
   }, "update-avatar");
 };
 
-export const updateProfile = async (body: UpdateAvatarBody) => {
+export const updateProfile = async (body: UpdateProfileBody) => {
   return await apiWrapper(async () => {
     const { data } = await api.put<MessageType>(`/user/profile`, body);
     return data;
