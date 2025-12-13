@@ -223,7 +223,7 @@ function RouteComponent() {
           Olá, <span className="text-5xl">tudo bem?</span>
         </motion.h3>
 
-        <div className="w-full h-full top-0 left-0 absolute">
+        <div className="w-full h-full top-0 left-0 absolute pointer-events-none">
           <video
             src="https://www.pexels.com/download/video/28561361"
             autoPlay
